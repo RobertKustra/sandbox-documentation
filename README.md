@@ -153,3 +153,23 @@ Contains WSL-specific setup instructions and helper scripts for using the worksp
 - Add more environments or services under `sandbox-cluster-config`
 - Use the existing `monitoring` app package to extend alerts and dashboards
 
+## Repository dependency diagram
+
+The relationship between the core repositories is:
+
+```text
+sandbox-cluster-config
+        |    \
+        |     \
+        |      \
+        |       \
+        v        v
+sandbox-env-values   sandbox-helm-charts
+```
+
+- `sandbox-cluster-config` is the Flux GitOps entrypoint and references both:
+  - `sandbox-env-values` for environment-specific Helm values
+  - `sandbox-helm-charts` for Helm chart sources used by HelmReleases
+
+This means `sandbox-cluster-config` orchestrates deployments using the other two repositories.
+
