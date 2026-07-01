@@ -25,6 +25,25 @@ This workspace defines a GitOps flow for a Minikube cluster using Flux. It suppo
 
 Clone or open the workspace containing all `sandbox-*` repositories.
 
+For this demo, you'll need WSL set up with Ubuntu.
+
+Run the prerequisite script to install required packages:
+
+```bash
+bash wsl-setup.sh
+```
+
+The script installs the following packages for the demo environment:
+
+- `build-essential`
+- `curl`
+- `file`
+- `tilix`
+- `docker-ce`, `docker-ce-cli`, `containerd.io`
+- Homebrew for Linux
+- `git`, `wget`, `zsh`, `tmux`, `neovim`, `python`, `libpq`, `htop`, `ripgrep`, `fd`, `fzf`, `bat`, `jq`, `awscli`, `k9s`, `docker`, `minikube`, `kubectl`, `flux`
+- `kubectx` and `kubens`
+
 ### 2. Start Minikube
 
 ```bash
@@ -32,14 +51,9 @@ minikube start
 kubectl config current-context
 ```
 
-### 3. Install Flux CLI
 
-```bash
-curl -s https://fluxcd.io/install.sh | sudo bash
-flux --version
-```
 
-### 4. Bootstrap or reconcile Flux
+### 3. Bootstrap or reconcile Flux
 
 The main Flux entrypoint is `sandbox-cluster-config/clusters/minikube`.
 
@@ -65,7 +79,7 @@ kubectl get kustomizations -A
 kubectl get helmreleases -A
 ```
 
-### 5. Deploy and verify environments
+### 4. Deploy and verify environments
 
 The following environments are managed separately:
 
@@ -81,7 +95,7 @@ For example, the dev environment deploys:
 - `apps/dev/sandbox-app.yaml` — HelmRelease for `sandbox-app`
 - `apps/dev/ingress.yaml` — Traefik Ingress for `sandbox-app.dev.local`
 
-### 6. Access services
+### 5. Access services
 
 Current host names configured in the repo:
 
@@ -93,7 +107,7 @@ Current host names configured in the repo:
 
 You may need to add these entries to your `/etc/hosts` file to resolve them locally.
 
-### 7. Update charts and values
+### 6. Update charts and values
 
 To change application behavior:
 
