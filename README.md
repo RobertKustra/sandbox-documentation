@@ -29,6 +29,8 @@ For this demo, you'll need WSL set up with Ubuntu.
 
 Run the prerequisite script to install required packages:
 
+Repo: `wsl-config`
+
 ```bash
 bash wsl-setup.sh
 ```
