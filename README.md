@@ -114,7 +114,7 @@ To change application behavior:
 
 - edit Helm chart definitions in `sandbox-helm-charts/charts/sandbox-app`
 - edit shared values in `sandbox-env-values/base` and environment overrides in `sandbox-env-values/overlays/dev`, `sandbox-env-values/overlays/test`, or `sandbox-env-values/overlays/prod`
-- update HelmRelease manifests in `sandbox-cluster-config/apps/<env>` or `sandbox-cluster-config/apps/monitoring`
+- update shared app manifests in `sandbox-cluster-config/apps/base`, environment overlays in `sandbox-cluster-config/apps/overlays/<env>`, or monitoring manifests in `sandbox-cluster-config/apps/monitoring`
 
 Then commit and push the changes, and let Flux reconcile the cluster.
 
