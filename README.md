@@ -133,7 +133,7 @@ This repository contains the Flux GitOps configuration:
 Important components:
 
 - `apps/monitoring` — monitoring stack with Prometheus, Grafana, Loki-stack, Promtail, and Alertmanager
-- `apps/<env>/ingress.yaml` — environment-specific Ingress resources for `sandbox-app`
+- `apps/overlays/<env>/kustomization.yaml` — environment-specific overlay for `sandbox-app` resources (including Ingress host)
 
 ### sandbox-helm-charts
 
