@@ -143,6 +143,7 @@ Contains reusable chart definitions used by Flux.
 Current chart:
 
 - `charts/sandbox-app` — example NGINX-based app chart exposed via service and ingress
+- `charts/redis` — Redis chart used by the Redis HelmRelease in `sandbox-cluster-config`
 
 ### sandbox-env-values
 
