@@ -134,6 +134,7 @@ Important components:
 
 - `apps/monitoring` — monitoring stack with Prometheus, Grafana, Loki-stack, Promtail, and Alertmanager
 - `apps/overlays/<env>/kustomization.yaml` — environment-specific overlay for `sandbox-app` resources (including Ingress host)
+- `apps/overlays/<env>/kustomization.yaml` — also contains `redis-auth` Secret generation used by the Redis HelmRelease
 
 ### sandbox-helm-charts
 
