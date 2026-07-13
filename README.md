@@ -6,7 +6,7 @@ This repository contains high-level usage documentation for the Sandbox workspac
 
 - `sandbox-cluster-config` — Flux GitOps cluster configuration for Minikube, environment manifests, namespaces, apps and monitoring.
 - `sandbox-helm-charts` — shared Helm charts for the sandbox apps, including the `sandbox-app` example chart.
-- `sandbox-env-values` — environment-specific values used by Flux HelmReleases for dev, test, and prod.
+- `sandbox-env-values` — shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
 - `wsl-config` — WSL support scripts and configuration helpers.
 
 ## What this setup does
@@ -15,7 +15,7 @@ This workspace defines a GitOps flow for a Minikube cluster using Flux. It suppo
 
 - multiple environments: `dev`, `test`, `prod`, and `monitoring`
 - Helm chart deployments managed by Flux
-- environment-specific values stored separately from cluster configuration
+- shared and environment-specific Helm values stored separately from cluster configuration
 - a monitoring stack with Prometheus, Grafana, Loki/Promtail, and Alertmanager
 - Traefik Ingress routes for application and monitoring access
 
@@ -113,7 +113,7 @@ You may need to add these entries to your `/etc/hosts` file to resolve them loca
 To change application behavior:
 
 - edit Helm chart definitions in `sandbox-helm-charts/charts/sandbox-app`
-- edit environment-specific values in `sandbox-env-values/dev`, `sandbox-env-values/test`, or `sandbox-env-values/prod`
+- edit shared values in `sandbox-env-values/base` and environment overrides in `sandbox-env-values/overlays/dev`, `sandbox-env-values/overlays/test`, or `sandbox-env-values/overlays/prod`
 - update HelmRelease manifests in `sandbox-cluster-config/apps/<env>` or `sandbox-cluster-config/apps/monitoring`
 
 Then commit and push the changes, and let Flux reconcile the cluster.
