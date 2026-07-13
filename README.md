@@ -89,12 +89,13 @@ The following environments are managed separately:
 - `prod` — `clusters/minikube/environments/prod`
 - `monitoring` — `clusters/minikube/environments/monitoring`
 
-Each environment includes a Kustomization pointing to an app package under `apps/<env>`.
+Each environment includes a Kustomization pointing to an app overlay under `apps/overlays/<env>`.
 
 For example, the dev environment deploys:
 
-- `apps/dev/sandbox-app.yaml` — HelmRelease for `sandbox-app`
-- `apps/dev/ingress.yaml` — Traefik Ingress for `sandbox-app.dev.local`
+- `apps/base/sandbox-app.yaml` — shared HelmRelease definition for `sandbox-app`
+- `apps/base/ingress.yaml` — shared Ingress definition
+- `apps/overlays/dev/kustomization.yaml` — dev-specific overlay (including host `sandbox-app.dev.local`)
 
 ### 5. Access services
 
