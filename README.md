@@ -109,6 +109,68 @@ Current host names configured in the repo:
 
 You may need to add these entries to your `/etc/hosts` file to resolve them locally.
 
+### 5a. Test sandbox-vllm on Minikube
+
+Use this flow to validate the LLM service exposed in the `llm` namespace.
+
+1. Verify service and pod are running:
+
+```bash
+kubectl -n llm get svc,pods
+```
+
+Expected service name:
+
+- `sandbox-vllm` on port `8000`
+
+2. Start port-forward from local machine to the cluster service:
+
+```bash
+kubectl -n llm port-forward svc/sandbox-vllm 8000:8000
+```
+
+Leave this command running in a separate terminal.
+
+3. Run quick API checks from another terminal:
+
+```bash
+curl -i http://127.0.0.1:8000/health
+curl -s http://127.0.0.1:8000/v1/models | jq .
+```
+
+4. Send a sample chat completion request:
+
+```bash
+curl -s http://127.0.0.1:8000/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "messages": [{"role": "user", "content": "Napisz jedno zdanie o Kubernetes."}],
+    "temperature": 0.8,
+    "max_tokens": 80
+  }' | jq .
+```
+
+5. Optional stress test (parallel requests):
+
+```bash
+model="Qwen/Qwen2.5-1.5B-Instruct"
+count=50
+parallel=8
+
+seq 1 "$count" | xargs -I{} -P "$parallel" bash -lc '
+  i={}
+  out=$(curl -sS -o /tmp/vllm_test_$i.json -w "%{http_code} %{time_total}" http://127.0.0.1:8000/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d "{\"model\":\"'"$model"'\",\"messages\":[{\"role\":\"user\",\"content\":\"Test #$i: napisz 6 slow o AI\"}],\"temperature\":0.7,\"max_tokens\":64}")
+  echo "$i $out"
+' | tee /tmp/vllm_parallel_results.txt
+
+awk '{c[$2]++} END{for (k in c) print k, c[k]}' /tmp/vllm_parallel_results.txt | sort -n
+```
+
+If the status summary is mostly `200`, the endpoint is healthy under this load.
+
 ### 6. Update charts and values
 
 To change application behavior:
