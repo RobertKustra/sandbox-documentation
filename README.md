@@ -5,7 +5,7 @@ This repository contains high-level usage documentation for the Sandbox workspac
 ## Repositories in the Workspace
 
 - `sandbox-cluster-config` — Flux GitOps cluster configuration for Minikube, environment manifests, namespaces, apps and monitoring.
-- `sandbox-helm-charts` — shared Helm charts for the sandbox apps, including the `sandbox-app` example chart.
+- `sandbox-helm-charts` — shared Helm charts for the sandbox apps, including `sandbox-nginx`, `sandbox-redis`, and `sandbox-vllm`.
 - `sandbox-env-values` — shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
 - `wsl-config` — WSL support scripts and configuration helpers.
 
@@ -13,7 +13,7 @@ This repository contains high-level usage documentation for the Sandbox workspac
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It supports:
 
-- multiple environments: `dev`, `test`, `prod`, and `monitoring`
+- multiple environments: `dev`, `test`, `prod`, `monitoring`, and `llm`
 - Helm chart deployments managed by Flux
 - shared and environment-specific Helm values stored separately from cluster configuration
 - a monitoring stack with Prometheus, Grafana, Loki/Promtail, and Alertmanager
@@ -88,22 +88,24 @@ The following environments are managed separately:
 - `test` — `clusters/minikube/environments/test`
 - `prod` — `clusters/minikube/environments/prod`
 - `monitoring` — `clusters/minikube/environments/monitoring`
+- `llm` — `clusters/minikube/environments/llm`
 
 Each environment includes a Kustomization pointing to an app overlay under `apps/overlays/<env>`.
 
 For example, the dev environment deploys:
 
-- `apps/base/sandbox-app.yaml` — shared HelmRelease definition for `sandbox-app`
+- `apps/base/sandbox-nginx.yaml` — shared HelmRelease definition for `sandbox-nginx`
 - `apps/base/ingress.yaml` — shared Ingress definition
-- `apps/overlays/dev/kustomization.yaml` — dev-specific overlay (including host `sandbox-app.dev.local`)
+- `apps/overlays/dev/kustomization.yaml` — dev-specific overlay (including host `sandbox-nginx.dev.local`)
 
 ### 5. Access services
 
 Current host names configured in the repo:
 
-- `sandbox-app.dev.local`
-- `sandbox-app.test.local`
-- `sandbox-app.prod.local`
+- `sandbox-nginx.dev.local`
+- `sandbox-nginx.test.local`
+- `sandbox-nginx.prod.local`
+- `sandbox-vllm.llm.local`
 - `grafana.monitoring.local`
 - `alertmanager.monitoring.local`
 
@@ -175,9 +177,9 @@ If the status summary is mostly `200`, the endpoint is healthy under this load.
 
 To change application behavior:
 
-- edit Helm chart definitions in `sandbox-helm-charts/charts/sandbox-app`
+- edit Helm chart definitions in `sandbox-helm-charts/charts/sandbox-nginx`, `sandbox-helm-charts/charts/sandbox-redis`, and `sandbox-helm-charts/charts/sandbox-vllm`
 - edit shared values in `sandbox-env-values/base` and environment overrides in `sandbox-env-values/overlays/dev`, `sandbox-env-values/overlays/test`, or `sandbox-env-values/overlays/prod`
-- update shared app manifests in `sandbox-cluster-config/apps/base`, environment overlays in `sandbox-cluster-config/apps/overlays/<env>`, or monitoring manifests in `sandbox-cluster-config/apps/monitoring`
+- update shared app manifests in `sandbox-cluster-config/apps/base`, environment overlays in `sandbox-cluster-config/apps/overlays/<env>`, LLM manifests in `sandbox-cluster-config/apps/llm`, or monitoring manifests in `sandbox-cluster-config/apps/monitoring`
 
 Then commit and push the changes, and let Flux reconcile the cluster.
 
@@ -196,17 +198,19 @@ This repository contains the Flux GitOps configuration:
 Important components:
 
 - `apps/monitoring` — monitoring stack with Prometheus, Grafana, Loki-stack, Promtail, and Alertmanager
-- `apps/overlays/<env>/kustomization.yaml` — environment-specific overlay for `sandbox-app` resources (including Ingress host)
-- `apps/overlays/<env>/kustomization.yaml` — also contains `redis-auth` Secret generation used by the Redis HelmRelease
+- `apps/llm` — `sandbox-vllm` HelmRelease, ingress, and smoke-test-enabled deployment configuration
+- `apps/overlays/<env>/kustomization.yaml` — environment-specific overlay for `sandbox-nginx` resources (including Ingress host)
+- `apps/overlays/<env>/kustomization.yaml` — also contains `sandbox-redis-auth` Secret generation used by the `sandbox-redis` HelmRelease
 
 ### sandbox-helm-charts
 
 Contains reusable chart definitions used by Flux.
 
-Current chart:
+Current charts:
 
-- `charts/sandbox-app` — example NGINX-based app chart exposed via service and ingress
-- `charts/redis` — Redis chart used by the Redis HelmRelease in `sandbox-cluster-config`
+- `charts/sandbox-nginx` — NGINX-based app chart exposed via service and ingress
+- `charts/sandbox-redis` — Redis chart used by the `sandbox-redis` HelmRelease in `sandbox-cluster-config`
+- `charts/sandbox-vllm` — vLLM inference chart with a post-install/post-upgrade smoke-test hook
 
 ### sandbox-env-values
 
