@@ -239,6 +239,7 @@ Contains WSL-specific setup instructions and helper scripts for using the worksp
 - Manage environment-specific settings in `sandbox-env-values`
 - Add more environments or services under `sandbox-cluster-config`
 - Use the existing `monitoring` app package to extend alerts and dashboards
+- TODO: Configure Alertmanager notifications for Discord (webhook or relay) in `sandbox-cluster-config/apps/monitoring/alertmanager.yaml`.
 
 ## Repository dependency diagram
 
