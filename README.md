@@ -147,9 +147,9 @@ curl -s http://127.0.0.1:8000/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "Qwen/Qwen2.5-Coder-3B-Instruct",
-    "messages": [{"role": "user", "content": "Napisz skrypt w bash, ktory wyswietli zawartosc domyslnych zmiennych systemowych."}],
+    "messages": [{"role": "user", "content": "Write a Bash script that displays the contents of the default system variables."}],
     "temperature": 0.8,
-    "max_tokens": 80
+    "max_tokens": 120
   }' | jq .
 ```
 
@@ -164,7 +164,7 @@ seq 1 "$count" | xargs -I{} -P "$parallel" bash -lc '
   i={}
   out=$(curl -sS -o /tmp/vllm_test_$i.json -w "%{http_code} %{time_total}" http://127.0.0.1:8000/v1/chat/completions \
     -H "Content-Type: application/json" \
-    -d "{\"model\":\"'"$model"'\",\"messages\":[{\"role\":\"user\",\"content\":\"Test #$i: napisz 6 slow o AI\"}],\"temperature\":0.7,\"max_tokens\":64}")
+    -d "{\"model\":\"'"$model"'\",\"messages\":[{\"role\":\"user\",\"content\":\"Test #$i: Write 6 words about AI\"}],\"temperature\":0.7,\"max_tokens\":64}")
   echo "$i $out"
 ' | tee /tmp/vllm_parallel_results.txt
 
