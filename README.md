@@ -63,7 +63,7 @@ If you are bootstrapping Flux for the first time, use a command similar to:
 ```bash
 export GITHUB_TOKEN=<your-github-token>
 flux bootstrap github \
-  --owner=<github-owner> \
+  --owner=RobertKustra \
   --repository=sandbox-cluster-config \
   --branch=development \
   --path=./clusters/minikube \
@@ -211,6 +211,7 @@ Current charts:
 - `charts/sandbox-nginx` — NGINX-based app chart exposed via service and ingress
 - `charts/sandbox-redis` — Redis chart used by the `sandbox-redis` HelmRelease in `sandbox-cluster-config`
 - `charts/sandbox-vllm` — vLLM inference chart with a post-install/post-upgrade smoke-test hook
+- `charts/sandbox-ai-consumer` — vLLM consumer worker chart using environment-driven runtime settings (`VLLM_*`)
 
 ### sandbox-env-values
 
@@ -219,6 +220,8 @@ Contains Helm values for each environment:
 - `dev/` — values for development deployments
 - `test/` — values for test deployments
 - `prod/` — values for production deployments
+
+Current rollout scope for `sandbox-ai-consumer` is `dev` and `test`.
 
 ### wsl-config
 
