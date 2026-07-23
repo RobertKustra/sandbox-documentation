@@ -247,11 +247,11 @@ The relationship between the core repositories is:
 
 ```text
 sandbox-cluster-config
-        |    \
-        |     \
-        |      \
-        |       \
-        v        v
+        |         \
+        |          \
+        |           \
+        |            \
+        v             v
 sandbox-env-values   sandbox-helm-charts
 ```
 
