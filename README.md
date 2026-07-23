@@ -146,7 +146,7 @@ curl -s http://127.0.0.1:8000/v1/models | jq .
 curl -s http://127.0.0.1:8000/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
-    "model": "Qwen/Qwen2.5-Coder-3B-Instruct",
+    "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
     "messages": [{"role": "user", "content": "Write a Bash script that displays the contents of the default system variables."}],
     "temperature": 0.8,
     "max_tokens": 120
