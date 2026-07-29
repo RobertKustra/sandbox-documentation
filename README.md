@@ -111,7 +111,88 @@ Current host names configured in the repo:
 
 You may need to add these entries to your `/etc/hosts` file to resolve them locally.
 
-### 5a. Test sandbox-vllm on Minikube
+### 5a. vLLM Hardware Requirements
+
+The `sandbox-vllm` service requires specific hardware to operate properly. The requirements vary depending on the model size and inference parameters.
+
+#### Current Configuration
+
+The sandbox setup uses:
+
+- **Model**: `Qwen/Qwen2.5-Coder-3B-Instruct` (3B parameters)
+- **GPU**: 1x NVIDIA GPU (minimum 16GB VRAM recommended)
+- **CPU**: 2 cores (request) / 4 cores (limit)
+- **Memory**: 4Gi (request) / 8Gi (limit)
+- **Storage**: 30Gi persistent volume for model cache (`/root/.cache/huggingface`)
+- **Shared Memory**: 2Gi `/dev/shm` mount (for CUDA operations)
+
+#### Minimum Hardware Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| GPU | 8GB VRAM | 16GB+ VRAM |
+| CPU Cores | 2 | 4-8 |
+| System RAM | 8Gi | 16Gi+ |
+| Storage | 30Gi | 50Gi+ (for multiple models) |
+| Shared Memory (/dev/shm) | 1Gi | 2Gi+ |
+
+#### GPU Memory Considerations
+
+- **Smaller models (1B-3B parameters)**: 8-12GB VRAM sufficient
+  - Example: `Qwen/Qwen2.5-Coder-3B-Instruct`
+  - Max model length: 2048-4096 tokens
+  - Max concurrent sequences: 1-4
+
+- **Medium models (7B-13B parameters)**: 16GB VRAM minimum
+  - Max model length: 2048 tokens
+  - Max concurrent sequences: 1-2
+
+- **Larger models (30B+ parameters)**: 24GB+ VRAM
+  - Consider quantization (4-bit, 8-bit) for lower VRAM usage
+
+#### Key Tuning Parameters
+
+Located in [sandbox-cluster-config/apps/llm/sandbox-vllm.yaml](sandbox-cluster-config/apps/llm/sandbox-vllm.yaml):
+
+- `--dtype half` — Use float16 to reduce memory usage (vs float32)
+- `--gpu-memory-utilization 0.6` — Allocate 60% of GPU VRAM for model; adjust down (0.4-0.5) if OOM occurs
+- `--max-model-len 16384` — Maximum input + output token length; reduce to 2048-4096 if memory constrained
+- `--max-num-seqs 4` — Maximum concurrent sequences; reduce to 1-2 if OOM occurs
+- `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` — Enable memory fragmentation mitigation
+
+#### Out-of-Memory (OOM) Mitigation
+
+If experiencing OOM errors with 16GB GPUs:
+
+1. Reduce `--gpu-memory-utilization` from 0.6 to 0.4-0.5
+2. Lower `--max-num-seqs` from 4 to 1-2
+3. Decrease `--max-model-len` from 16384 to 2048-4096
+4. Ensure `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:64` is set
+5. Increase shared memory `/dev/shm` from 2Gi to 4Gi if available
+
+#### Cluster Resource Reservation
+
+Ensure your Minikube instance has sufficient resources:
+
+```bash
+minikube start \
+  --cpus=8 \
+  --memory=16384 \
+  --disk-size=100g \
+  --gpus=all
+```
+
+For WSL2 with NVIDIA GPU passthrough, configure in your `.wslconfig`:
+
+```ini
+[wsl2]
+memory=16GB
+processors=8
+guiApplications=true
+gpuSupport=true
+```
+
+### 5b. Test sandbox-vllm on Minikube
 
 Use this flow to validate the LLM service exposed in the `llm` namespace.
 
