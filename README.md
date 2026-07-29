@@ -48,7 +48,18 @@ The script installs the following packages for the demo environment:
 ### 2. Start Minikube
 
 ```bash
-minikube start -p minikube --driver=docker --container-runtime=docker --gpus=all && kubectl get node minikube -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}' && docker inspect minikube --format 'NanoCPUs={{.HostConfig.NanoCpus}} MemoryBytes={{.HostConfig.Memory}}'
+minikube start \
+  -p minikube \
+  --driver=docker \
+  --container-runtime=docker \
+  --gpus=all
+
+kubectl get node minikube \
+  -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
+
+docker inspect minikube \
+  --format 'NanoCPUs={{.HostConfig.NanoCpus}} MemoryBytes={{.HostConfig.Memory}}'
+
 kubectl config current-context
 ```
 
@@ -212,7 +223,17 @@ After committing these changes Flux will skip the GPU-dependent components and a
 Ensure your Minikube instance has sufficient resources:
 
 ```bash
-minikube start -p minikube --driver=docker --container-runtime=docker --gpus=all && kubectl get node minikube -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}' && docker inspect minikube --format 'NanoCPUs={{.HostConfig.NanoCpus}} MemoryBytes={{.HostConfig.Memory}}'
+minikube start \
+  -p minikube \
+  --driver=docker \
+  --container-runtime=docker \
+  --gpus=all
+
+kubectl get node minikube \
+  -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
+
+docker inspect minikube \
+  --format 'NanoCPUs={{.HostConfig.NanoCpus}} MemoryBytes={{.HostConfig.Memory}}'
 ```
 
 For WSL2 with NVIDIA GPU passthrough, configure in your `.wslconfig`:
