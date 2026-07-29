@@ -4,10 +4,10 @@ This repository contains high-level usage documentation for the Sandbox workspac
 
 ## Repositories in the Workspace
 
-- `sandbox-cluster-config` — Flux GitOps cluster configuration for Minikube, environment manifests, namespaces, apps and monitoring.
-- `sandbox-helm-charts` — shared Helm charts for the sandbox apps, including `sandbox-nginx`, `sandbox-redis`, and `sandbox-vllm`.
-- `sandbox-env-values` — shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
-- `wsl-config` — WSL support scripts and configuration helpers.
+- `sandbox-cluster-config` - Flux GitOps cluster configuration for Minikube, environment manifests, namespaces, apps and monitoring.
+- `sandbox-helm-charts` - shared Helm charts for the sandbox apps, including `sandbox-nginx`, `sandbox-redis`, and `sandbox-vllm`.
+- `sandbox-env-values` - shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
+- `wsl-config` - WSL support scripts and configuration helpers.
 
 ## What this setup does
 
@@ -84,19 +84,19 @@ kubectl get helmreleases -A
 
 The following environments are managed separately:
 
-- `dev` — `clusters/minikube/environments/dev`
-- `test` — `clusters/minikube/environments/test`
-- `prod` — `clusters/minikube/environments/prod`
-- `monitoring` — `clusters/minikube/environments/monitoring`
-- `llm` — `clusters/minikube/environments/llm`
+- `dev` - `clusters/minikube/environments/dev`
+- `test` - `clusters/minikube/environments/test`
+- `prod` - `clusters/minikube/environments/prod`
+- `monitoring` - `clusters/minikube/environments/monitoring`
+- `llm` - `clusters/minikube/environments/llm`
 
 Each environment includes a Kustomization pointing to an app overlay under `apps/overlays/<env>`.
 
 For example, the dev environment deploys:
 
-- `apps/base/sandbox-nginx.yaml` — shared HelmRelease definition for `sandbox-nginx`
-- `apps/base/ingress.yaml` — shared Ingress definition
-- `apps/overlays/dev/kustomization.yaml` — dev-specific overlay (including host `sandbox-nginx.dev.local`)
+- `apps/base/sandbox-nginx.yaml` - shared HelmRelease definition for `sandbox-nginx`
+- `apps/base/ingress.yaml` - shared Ingress definition
+- `apps/overlays/dev/kustomization.yaml` - dev-specific overlay (including host `sandbox-nginx.dev.local`)
 
 ### 5. Access services
 
@@ -154,11 +154,11 @@ The sandbox setup uses:
 
 Located in [sandbox-cluster-config/apps/llm/sandbox-vllm.yaml](sandbox-cluster-config/apps/llm/sandbox-vllm.yaml):
 
-- `--dtype half` — Use float16 to reduce memory usage (vs float32)
-- `--gpu-memory-utilization 0.6` — Allocate 60% of GPU VRAM for model; adjust down (0.4-0.5) if OOM occurs
-- `--max-model-len 16384` — Maximum input + output token length; reduce to 2048-4096 if memory constrained
-- `--max-num-seqs 4` — Maximum concurrent sequences; reduce to 1-2 if OOM occurs
-- `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` — Enable memory fragmentation mitigation
+- `--dtype half` - Use float16 to reduce memory usage (vs float32)
+- `--gpu-memory-utilization 0.6` - Allocate 60% of GPU VRAM for model; adjust down (0.4-0.5) if OOM occurs
+- `--max-model-len 16384` - Maximum input + output token length; reduce to 2048-4096 if memory constrained
+- `--max-num-seqs 4` - Maximum concurrent sequences; reduce to 1-2 if OOM occurs
+- `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` - Enable memory fragmentation mitigation
 
 #### Out-of-Memory (OOM) Mitigation
 
@@ -176,7 +176,7 @@ If experiencing OOM errors with 16GB GPUs:
 
 To disable these components, comment out or remove the relevant entries in the following files:
 
-1. **Disable the `llm` environment entirely** — remove the reference from the cluster kustomization:
+1. **Disable the `llm` environment entirely** - remove the reference from the cluster kustomization:
 
    - File: [sandbox-cluster-config/clusters/minikube/kustomization.yaml](sandbox-cluster-config/clusters/minikube/kustomization.yaml)
    ```yaml
@@ -184,7 +184,7 @@ To disable these components, comment out or remove the relevant entries in the f
      # - ./environments/llm.yaml   # comment out when no GPU available
    ```
 
-2. **Disable `sandbox-ai-consumer` from dev/test/prod overlays** — remove the resource from each overlay:
+2. **Disable `sandbox-ai-consumer` from dev/test/prod overlays** - remove the resource from each overlay:
 
    - File: [sandbox-cluster-config/apps/overlays/dev/kustomization.yaml](sandbox-cluster-config/apps/overlays/dev/kustomization.yaml)
    - File: [sandbox-cluster-config/apps/overlays/test/kustomization.yaml](sandbox-cluster-config/apps/overlays/test/kustomization.yaml)
@@ -194,7 +194,7 @@ To disable these components, comment out or remove the relevant entries in the f
      # - ../../sandbox-ai-consumer/base   # comment out when no GPU / vLLM not deployed
    ```
 
-3. **Remove the `minikube-llm` dependency from dev/test/prod Flux Kustomizations** — otherwise Flux will block reconciliation waiting for the missing llm environment:
+3. **Remove the `minikube-llm` dependency from dev/test/prod Flux Kustomizations** - otherwise Flux will block reconciliation waiting for the missing llm environment:
 
    - File: [sandbox-cluster-config/clusters/minikube/environments/dev.yaml](sandbox-cluster-config/clusters/minikube/environments/dev.yaml)
    - File: [sandbox-cluster-config/clusters/minikube/environments/test.yaml](sandbox-cluster-config/clusters/minikube/environments/test.yaml)
@@ -303,18 +303,18 @@ Then commit and push the changes, and let Flux reconcile the cluster.
 
 This repository contains the Flux GitOps configuration:
 
-- `clusters/minikube/flux-system` — Flux resources and HelmRepository sources
-- `clusters/minikube/environments/*` — environment-specific Kustomizations
-- `namespaces/*` — namespace manifests
-- `apps/*` — HelmRelease and Ingress manifests for each environment
-- `sources/*` — GitRepository definitions for external repo sources
+- `clusters/minikube/flux-system` - Flux resources and HelmRepository sources
+- `clusters/minikube/environments/*` - environment-specific Kustomizations
+- `namespaces/*` - namespace manifests
+- `apps/*` - HelmRelease and Ingress manifests for each environment
+- `sources/*` - GitRepository definitions for external repo sources
 
 Important components:
 
-- `apps/monitoring` — monitoring stack with Prometheus, Grafana, Loki-stack, Promtail, and Alertmanager
-- `apps/llm` — `sandbox-vllm` HelmRelease, ingress, and smoke-test-enabled deployment configuration
-- `apps/overlays/<env>/kustomization.yaml` — environment-specific overlay for `sandbox-nginx` resources (including Ingress host)
-- `apps/overlays/<env>/kustomization.yaml` — also contains `sandbox-redis-auth` Secret generation used by the `sandbox-redis` HelmRelease
+- `apps/monitoring` - monitoring stack with Prometheus, Grafana, Loki-stack, Promtail, and Alertmanager
+- `apps/llm` - `sandbox-vllm` HelmRelease, ingress, and smoke-test-enabled deployment configuration
+- `apps/overlays/<env>/kustomization.yaml` - environment-specific overlay for `sandbox-nginx` resources (including Ingress host)
+- `apps/overlays/<env>/kustomization.yaml` - also contains `sandbox-redis-auth` Secret generation used by the `sandbox-redis` HelmRelease
 
 ### sandbox-helm-charts
 
@@ -322,18 +322,18 @@ Contains reusable chart definitions used by Flux.
 
 Current charts:
 
-- `charts/sandbox-nginx` — NGINX-based app chart exposed via service and ingress
-- `charts/sandbox-redis` — Redis chart used by the `sandbox-redis` HelmRelease in `sandbox-cluster-config`
-- `charts/sandbox-vllm` — vLLM inference chart with a post-install/post-upgrade smoke-test hook
-- `charts/sandbox-ai-consumer` — vLLM consumer worker chart using environment-driven runtime settings (`VLLM_*`)
+- `charts/sandbox-nginx` - NGINX-based app chart exposed via service and ingress
+- `charts/sandbox-redis` - Redis chart used by the `sandbox-redis` HelmRelease in `sandbox-cluster-config`
+- `charts/sandbox-vllm` - vLLM inference chart with a post-install/post-upgrade smoke-test hook
+- `charts/sandbox-ai-consumer` - vLLM consumer worker chart using environment-driven runtime settings (`VLLM_*`)
 
 ### sandbox-env-values
 
 Contains Helm values for each environment:
 
-- `dev/` — values for development deployments
-- `test/` — values for test deployments
-- `prod/` — values for production deployments
+- `dev/` - values for development deployments
+- `test/` - values for test deployments
+- `prod/` - values for production deployments
 
 Current rollout scope for `sandbox-ai-consumer` is `dev` and `test`.
 
