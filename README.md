@@ -13,11 +13,14 @@ This repository contains high-level usage documentation for the Sandbox workspac
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It supports:
 
+
 - multiple environments: `dev`, `test`, `prod`, `monitoring`, and `llm`
 - Helm chart deployments managed by Flux
 - shared and environment-specific Helm values stored separately from cluster configuration
 - a monitoring stack with Prometheus, Grafana, Loki/Promtail, and Alertmanager
 - Traefik Ingress routes for application and monitoring access
+
+**Warning:**  If your computer does not have a dedicated NVIDIA graphics processor that supports CUDA, do not install the `llm` and `ai-consumer` modules. The procedure is described later in this documentation.
 
 ## How to use it
 
