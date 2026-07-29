@@ -170,6 +170,43 @@ If experiencing OOM errors with 16GB GPUs:
 4. Ensure `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:64` is set
 5. Increase shared memory `/dev/shm` from 2Gi to 4Gi if available
 
+#### Deployment Without a Dedicated GPU
+
+> **Warning:** If your machine does not have a dedicated NVIDIA GPU that supports CUDA, do **not** deploy the `llm` environment and do **not** deploy `sandbox-ai-consumer` in any environment (`dev`, `test`, `prod`). Without GPU support vLLM will fail to start and `sandbox-ai-consumer` will loop on connection errors.
+
+To disable these components, comment out or remove the relevant entries in the following files:
+
+1. **Disable the `llm` environment entirely** — remove the reference from the cluster kustomization:
+
+   File: [sandbox-cluster-config/clusters/minikube/kustomization.yaml](sandbox-cluster-config/clusters/minikube/kustomization.yaml)
+   ```yaml
+   resources:
+     # - ./environments/llm.yaml   # comment out when no GPU available
+   ```
+
+2. **Disable `sandbox-ai-consumer` from dev/test/prod overlays** — remove the resource from each overlay:
+
+   File: [sandbox-cluster-config/apps/overlays/dev/kustomization.yaml](sandbox-cluster-config/apps/overlays/dev/kustomization.yaml)
+   File: [sandbox-cluster-config/apps/overlays/test/kustomization.yaml](sandbox-cluster-config/apps/overlays/test/kustomization.yaml)
+   File: [sandbox-cluster-config/apps/overlays/prod/kustomization.yaml](sandbox-cluster-config/apps/overlays/prod/kustomization.yaml)
+   ```yaml
+   resources:
+     # - ../../sandbox-ai-consumer/base   # comment out when no GPU / vLLM not deployed
+   ```
+
+3. **Remove the `minikube-llm` dependency from dev/test/prod Flux Kustomizations** — otherwise Flux will block reconciliation waiting for the missing llm environment:
+
+   File: [sandbox-cluster-config/clusters/minikube/environments/dev.yaml](sandbox-cluster-config/clusters/minikube/environments/dev.yaml)
+   File: [sandbox-cluster-config/clusters/minikube/environments/test.yaml](sandbox-cluster-config/clusters/minikube/environments/test.yaml)
+   File: [sandbox-cluster-config/clusters/minikube/environments/prod.yaml](sandbox-cluster-config/clusters/minikube/environments/prod.yaml)
+   ```yaml
+   spec:
+     dependsOn:
+       # - name: minikube-llm   # remove when llm environment is disabled
+   ```
+
+After committing these changes Flux will skip the GPU-dependent components and all remaining environments will reconcile normally.
+
 #### Cluster Resource Reservation
 
 Ensure your Minikube instance has sufficient resources:
