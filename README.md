@@ -166,7 +166,7 @@ The sandbox setup uses:
 
 #### Key Tuning Parameters
 
-Located in [sandbox-cluster-config/apps/llm/sandbox-vllm.yaml](sandbox-cluster-config/apps/llm/sandbox-vllm.yaml):
+Located in [sandbox-cluster-config/apps/llm/sandbox-vllm.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/llm/sandbox-vllm.yaml):
 
 - `--dtype half` - Use float16 to reduce memory usage (vs float32)
 - `--gpu-memory-utilization 0.6` - Allocate 60% of GPU VRAM for model; adjust down (0.4-0.5) if OOM occurs
@@ -192,7 +192,7 @@ To disable these components, comment out or remove the relevant entries in the f
 
 1. **Disable the `llm` environment entirely** - remove the reference from the cluster kustomization:
 
-   - File: [sandbox-cluster-config/clusters/minikube/kustomization.yaml](sandbox-cluster-config/clusters/minikube/kustomization.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/kustomization.yaml)
    ```yaml
    resources:
      # - ./environments/llm.yaml   # comment out when no GPU available
@@ -200,9 +200,9 @@ To disable these components, comment out or remove the relevant entries in the f
 
 2. **Disable `sandbox-ai-consumer` from dev/test/prod overlays** - remove the resource from each overlay:
 
-   - File: [sandbox-cluster-config/apps/overlays/dev/kustomization.yaml](sandbox-cluster-config/apps/overlays/dev/kustomization.yaml)
-   - File: [sandbox-cluster-config/apps/overlays/test/kustomization.yaml](sandbox-cluster-config/apps/overlays/test/kustomization.yaml)
-   - File: [sandbox-cluster-config/apps/overlays/prod/kustomization.yaml](sandbox-cluster-config/apps/overlays/prod/kustomization.yaml)
+   - File: [sandbox-cluster-config/apps/overlays/dev/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/overlays/dev/kustomization.yaml)
+   - File: [sandbox-cluster-config/apps/overlays/test/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/overlays/test/kustomization.yaml)
+   - File: [sandbox-cluster-config/apps/overlays/prod/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/overlays/prod/kustomization.yaml)
    ```yaml
    resources:
      # - ../../sandbox-ai-consumer/base   # comment out when no GPU / vLLM not deployed
@@ -210,9 +210,9 @@ To disable these components, comment out or remove the relevant entries in the f
 
 3. **Remove the `minikube-llm` dependency from dev/test/prod Flux Kustomizations** - otherwise Flux will block reconciliation waiting for the missing llm environment:
 
-   - File: [sandbox-cluster-config/clusters/minikube/environments/dev.yaml](sandbox-cluster-config/clusters/minikube/environments/dev.yaml)
-   - File: [sandbox-cluster-config/clusters/minikube/environments/test.yaml](sandbox-cluster-config/clusters/minikube/environments/test.yaml)
-   - File: [sandbox-cluster-config/clusters/minikube/environments/prod.yaml](sandbox-cluster-config/clusters/minikube/environments/prod.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/environments/dev.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/dev.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/environments/test.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/test.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/environments/prod.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/prod.yaml)
    ```yaml
    spec:
      dependsOn:
