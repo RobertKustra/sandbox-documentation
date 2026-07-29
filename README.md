@@ -54,7 +54,7 @@ kubectl config current-context
 
 
 
-### 3. Bootstrap or reconcile Flux
+### 3. Bootstrap Flux
 
 The main Flux entrypoint is `sandbox-cluster-config/clusters/minikube`.
 
