@@ -31,6 +31,18 @@ The expected promotion path is:
 
 This ensures that changes are reviewed, validated, and promoted through the correct environments before release.
 
+### Flux image automation
+
+The Flux GitOps setup also includes image automation for the application container images. The configuration in [sandbox-cluster-config/clusters/minikube/flux-system/image-automation.yaml](sandbox-cluster-config/clusters/minikube/flux-system/image-automation.yaml) defines:
+
+- `ImageRepository` resources for the `dev` and `prod` GHCR images:
+  - `ghcr.io/robertkustra/dev/sandbox-ai-consumer`
+  - `ghcr.io/robertkustra/prod/sandbox-ai-consumer`
+- `ImagePolicy` resources that allow Flux to evaluate available tags from those repositories.
+- `ImageUpdateAutomation` resources that update the image references in the values overlays for the `sandbox-env-values` repository.
+
+In practice, this means that once a new image is published to GHCR, Flux can automatically detect it and update the corresponding values files in the `dev` and `prod` overlays, as long as the required `ghcr-pull-secret` is available in the `flux-system` namespace.
+
 ## What this setup does
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It supports:
