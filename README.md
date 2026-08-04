@@ -134,7 +134,7 @@ The `sandbox-vllm` service requires specific hardware to operate properly. The r
 The sandbox setup uses:
 
 - **Model**: `Qwen/Qwen2.5-Coder-3B-Instruct` (3B parameters)
-- **GPU**: 1x NVIDIA GPU (minimum 16GB VRAM recommended)
+- **GPU**: 1x NVIDIA GPU (16GB VRAM recommended)
 - **CPU**: 2 cores (request) / 4 cores (limit)
 - **Memory**: 4Gi (request) / 8Gi (limit)
 - **Storage**: 30Gi persistent volume for model cache (`/root/.cache/huggingface`)
