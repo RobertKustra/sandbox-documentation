@@ -115,6 +115,7 @@ flux bootstrap github \
   --repository=sandbox-cluster-config \
   --branch=development \
   --path=./clusters/minikube \
+  --components-extra=image-reflector-controller,image-automation-controller \
   --personal \
   --ssh-key-algorithm=rsa \
   --ssh-hostname=github.com
