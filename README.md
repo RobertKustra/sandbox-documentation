@@ -20,8 +20,8 @@ The sandbox workspace uses GitHub Actions pipelines in the application repositor
 
 In the `sandbox-ai-consumer` repository, the following workflows are available:
 
-- `Build and push Docker image` - builds and pushes the application container image to GHCR on pushes to `development` and `main`, and can also be triggered manually.
-- `Validate PR source policy` - validates pull requests against the repository promotion rules so that only allowed branch flows are merged.
+- `Build and push Docker image` - builds and pushes the application container image to GHCR on pushes to `development` and `main`, and can also be triggered manually. The workflow checks out the repository, resolves the target environment and tag, logs in to GHCR, verifies whether the image already exists, and only then runs the build/push step. On `main`, it also creates a release Git tag after a successful publish.
+- `Validate PR source policy` - validates pull requests against the repository promotion rules so that only allowed branch flows are merged. It blocks invalid PRs targeting `development` or `main` before they can be merged.
 
 ### Branch promotion flow
 
