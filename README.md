@@ -12,6 +12,25 @@ This repository contains high-level usage documentation for the Sandbox workspac
 ### Bonus - Simple app for LLM as consumer
 - [sandbox-ai-consumer](https://github.com/RobertKustra/sandbox-ai-consumer)
 
+## CI/CD and pipeline overview
+
+The sandbox workspace uses GitHub Actions pipelines in the application repositories to automate validation and image publishing.
+
+### sandbox-ai-consumer pipelines
+
+In the `sandbox-ai-consumer` repository, the following workflows are available:
+
+- `Build and push Docker image` - builds and pushes the application container image to GHCR on pushes to `development` and `main`, and can also be triggered manually.
+- `Validate PR source policy` - validates pull requests against the repository promotion rules so that only allowed branch flows are merged.
+
+### Branch promotion flow
+
+The expected promotion path is:
+
+`feat/*` or `feature/*` -> `development` -> `main`
+
+This ensures that changes are reviewed, validated, and promoted through the correct environments before release.
+
 ## What this setup does
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It supports:
