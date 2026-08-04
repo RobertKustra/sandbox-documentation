@@ -7,7 +7,7 @@ This repository contains high-level usage documentation for the Sandbox workspac
 - `sandbox-cluster-config` - Flux GitOps cluster configuration for Minikube, environment manifests, namespaces, apps and monitoring.
 - `sandbox-helm-charts` - shared Helm charts for the sandbox apps, including `sandbox-nginx`, `sandbox-redis`, and `sandbox-vllm`.
 - `sandbox-env-values` - shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
-- `wsl-config` - WSL support scripts and configuration helpers.
+- `wsl-config` - WSL configuration helpers.
 
 ## What this setup does
 
