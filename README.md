@@ -158,7 +158,7 @@ Current host names configured in the repo:
 - `grafana.monitoring.local`
 - `alertmanager.monitoring.local`
 
-You may need to add these entries to your `/etc/hosts` file to resolve them locally.
+You may need to add these entries to your `/etc/hosts` file to resolve them locally, or use simple Port-Forward.
 
 ### 5a. vLLM Hardware Requirements
 
