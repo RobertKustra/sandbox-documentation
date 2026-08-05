@@ -361,9 +361,19 @@ If the status summary is mostly `200`, the endpoint is healthy under this load.
 
 To change application behavior:
 
-- edit Helm chart definitions in `sandbox-helm-charts/charts/sandbox-nginx`, `sandbox-helm-charts/charts/sandbox-redis`, and `sandbox-helm-charts/charts/sandbox-vllm`
+- edit Helm chart definitions in: 
+  - `sandbox-helm-charts/charts/sandbox-nginx`
+  - `sandbox-helm-charts/charts/sandbox-redis`
+  - `sandbox-helm-charts/charts/sandbox-vllm`
 - edit shared values in `sandbox-env-values/base` and environment overrides in `sandbox-env-values/overlays/dev`, `sandbox-env-values/overlays/test`, or `sandbox-env-values/overlays/prod`
-- update shared app manifests in `sandbox-cluster-config/apps/base`, environment overlays in `sandbox-cluster-config/apps/overlays/<env>`, LLM manifests in `sandbox-cluster-config/apps/llm`, or monitoring manifests in `sandbox-cluster-config/apps/monitoring`
+- update shared app manifests in:
+  - `sandbox-cluster-config/apps/base`
+- environment overlays in:
+  - `sandbox-cluster-config/apps/overlays/<env>`, 
+- LLM manifests in:
+  - `sandbox-cluster-config/apps/llm`
+- Monitoring manifests in:
+  - `sandbox-cluster-config/apps/monitoring`
 
 Then commit and push the changes, and let Flux reconcile the cluster.
 
