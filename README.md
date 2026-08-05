@@ -11,6 +11,43 @@ This repository contains high-level usage documentation for the Sandbox workspac
 
 ### Bonus - Simple app for LLM as consumer
 - [sandbox-ai-consumer](https://github.com/RobertKustra/sandbox-ai-consumer)
+- [sandbox-scaffolder](https://github.com/RobertKustra/sandbox-scaffolder) - separate scaffold tool used to generate and sync environment manifests for `sandbox-cluster-config` and `sandbox-env-values`.
+
+## Scaffold workflow
+
+Environment scaffolding is handled by the separate `sandbox-scaffolder` repository.
+
+Its main purpose is to:
+
+- read a `cluster-config.yaml` input file
+- generate or update environment manifests in `sandbox-cluster-config`
+- generate or update matching overlays in `sandbox-env-values`
+- optionally regenerate Flux `sandbox-env-values-<env>` kustomizations from currently enabled cluster environments
+
+### Main inputs and outputs
+
+- Input: `cluster-config.yaml`
+- Input repositories: `sandbox-cluster-config`, `sandbox-env-values`
+- Tooling repository: `sandbox-scaffolder`
+- Primary output: environment manifests, overlays, and Flux image automation resources derived from the YAML config
+
+### Minimal command flow
+
+Run the config-driven scaffold flow:
+
+```bash
+cd sandbox-scaffolder
+make run HOST_REPOS_ROOT=/home/ziutek/sandbox/Repos
+```
+
+Run sync-only maintenance flow:
+
+```bash
+cd sandbox-scaffolder
+make run-sync HOST_REPOS_ROOT=/home/ziutek/sandbox/Repos
+```
+
+The default `make run` path expects `cluster-config.yaml` in the `sandbox-scaffolder` repository and applies it against the local `sandbox-cluster-config` and `sandbox-env-values` repositories mounted into the container runtime.
 
 ## CI/CD and pipeline overview
 
@@ -177,31 +214,31 @@ For this case, it was tested host with the folowing stats:
 - DISK: 2Tb
 ```
 
-The sandbox setup uses:
+The sandbox setup uses a minimal profile:
 
-- **Model**: `Qwen/Qwen2.5-Coder-3B-Instruct` (3B parameters)
-- **GPU**: 1x NVIDIA GPU (6GB VRAM minimum 16GB recomende)
-- **CPU**: 2 cores (request) / 4 cores (limit)
-- **Memory**: 4Gi (request) / 8Gi (limit)
+- **Model**: `Qwen/Qwen2.5-0.5B-Instruct` (0.5B parameters)
+- **GPU**: 1x NVIDIA GPU (6GB VRAM minimum, 8GB+ recommended)
+- **CPU**: 250m (request) / 1 core (limit)
+- **Memory**: 512Mi (request) / 1536Mi (limit)
 - **Storage**: 30Gi persistent volume for model cache (`/root/.cache/huggingface`)
-- **Shared Memory**: 2Gi `/dev/shm` mount (for CUDA operations)
+- **Shared Memory**: 512Mi `/dev/shm` mount
 
 #### Minimum Hardware Requirements
 
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
-| GPU | 6GB VRAM | 16GB+ VRAM |
-| CPU Cores | 2 | 4-8 |
-| System RAM | 8Gi | 16Gi+ |
+| GPU | 6GB VRAM | 8GB+ VRAM |
+| CPU Cores | 1 | 2-4 |
+| System RAM | 4Gi | 8Gi+ |
 | Storage | 30Gi | 50Gi+ (for multiple models) |
-| Shared Memory (/dev/shm) | 1Gi | 2Gi+ |
+| Shared Memory (/dev/shm) | 512Mi | 1Gi+ |
 
 #### GPU Memory Considerations
 
-- **Smaller models (1B-3B parameters)**: 8-12GB VRAM sufficient
-  - Example: `Qwen/Qwen2.5-Coder-3B-Instruct`
-  - Max model length: 2048-4096 tokens
-  - Max concurrent sequences: 1-4
+- **Smaller models (0.5B-3B parameters)**: 4-12GB VRAM sufficient
+  - Example: `Qwen/Qwen2.5-0.5B-Instruct`
+  - Max model length: 512-2048 tokens
+  - Max concurrent sequences: 1-2
 
 - **Medium models (7B-13B parameters)**: 16GB VRAM minimum
   - Max model length: 2048 tokens
@@ -212,23 +249,24 @@ The sandbox setup uses:
 
 #### Key Tuning Parameters
 
-Located in [sandbox-cluster-config/apps/llm/sandbox-vllm.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/llm/sandbox-vllm.yaml):
+Located in [sandbox-cluster-config/cluster-components/llm/sandbox-vllm.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/cluster-components/llm/sandbox-vllm.yaml):
 
 - `--dtype half` - Use float16 to reduce memory usage (vs float32)
-- `--gpu-memory-utilization 0.6` - Allocate 60% of GPU VRAM for model; adjust down (0.4-0.5) if OOM occurs
-- `--max-model-len 16384` - Maximum input + output token length; reduce to 2048-4096 if memory constrained
-- `--max-num-seqs 4` - Maximum concurrent sequences; reduce to 1-2 if OOM occurs
+- `--gpu-memory-utilization 0.35` - Allocate 35% of GPU VRAM for model/cache; lower than this may fail model init
+- `--max-model-len 512` - Keep context very small to reduce KV cache usage
+- `--max-num-seqs 1` - Single concurrent sequence to minimize memory pressure
+- `--enforce-eager` - Lower memory pressure at the cost of performance
 - `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` - Enable memory fragmentation mitigation
 
 #### Out-of-Memory (OOM) Mitigation
 
-If experiencing OOM errors with 16GB GPUs:
+If experiencing OOM errors even with this minimal profile:
 
-1. Reduce `--gpu-memory-utilization` from 0.6 to 0.4-0.5
-2. Lower `--max-num-seqs` from 4 to 1-2
-3. Decrease `--max-model-len` from 16384 to 2048-4096
+1. Reduce `--gpu-memory-utilization` from 0.35 to 0.30
+2. Keep `--max-num-seqs=1` and reduce `--max-model-len` to `256`
+3. Keep a very small model only (1B class)
 4. Ensure `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:64` is set
-5. Increase shared memory `/dev/shm` from 2Gi to 4Gi if available
+5. If the host still restarts, disable the `llm` environment entirely on this machine
 
 #### Deployment Without a Dedicated GPU
 
@@ -330,7 +368,7 @@ curl -s http://127.0.0.1:8000/v1/models | jq .
 curl -s http://127.0.0.1:8000/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
-    "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
     "messages": [{"role": "user", "content": "Write a Bash script that displays the contents of the default system variables."}],
     "temperature": 0.8,
     "max_tokens": 120
@@ -340,9 +378,9 @@ curl -s http://127.0.0.1:8000/v1/chat/completions \
 5. Optional stress test (parallel requests):
 
 ```bash
-model="Qwen/Qwen2.5-Coder-3B-Instruct"
-count=50
-parallel=8
+model="Qwen/Qwen2.5-0.5B-Instruct"
+count=10
+parallel=1
 
 seq 1 "$count" | xargs -I{} -P "$parallel" bash -lc '
   i={}
