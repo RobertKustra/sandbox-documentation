@@ -9,9 +9,11 @@ This repository contains high-level usage documentation for the Sandbox workspac
 - [sandbox-env-values](https://github.com/RobertKustra/sandbox-env-values) - shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
 - [wsl-config](https://github.com/RobertKustra/wsl-config) - WSL configuration helpers.
 
-### Bonus - Simple app for LLM as consumer
-- [sandbox-ai-consumer](https://github.com/RobertKustra/sandbox-ai-consumer)
-- [sandbox-scaffolder](https://github.com/RobertKustra/sandbox-scaffolder) - separate scaffold tool used to generate and sync environment manifests for `sandbox-cluster-config` and `sandbox-env-values`.
+### Bonus 
+1. Simple app for LLM as consumer
+    - [sandbox-ai-consumer](https://github.com/RobertKustra/sandbox-ai-consumer)
+2. Scaffold environments 
+    - [sandbox-scaffolder](https://github.com/RobertKustra/sandbox-scaffolder) - separate scaffold tool used to generate and sync environment manifests for `sandbox-cluster-config` and `sandbox-env-values`.
 
 ## Scaffold workflow
 
