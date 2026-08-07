@@ -39,14 +39,14 @@ Run the config-driven scaffold flow:
 
 ```bash
 cd sandbox-scaffolder
-make run HOST_REPOS_ROOT=/home/ziutek/sandbox/Repos
+make run HOST_REPOS_ROOT=<path-to-sandbox-repos>
 ```
 
 Run sync-only maintenance flow:
 
 ```bash
 cd sandbox-scaffolder
-make run-sync HOST_REPOS_ROOT=/home/ziutek/sandbox/Repos
+make run-sync HOST_REPOS_ROOT=<path-to-sandbox-repos>
 ```
 
 The default `make run` path expects `cluster-config.yaml` in the `sandbox-scaffolder` repository and applies it against the local `sandbox-cluster-config` and `sandbox-env-values` repositories mounted into the container runtime.
