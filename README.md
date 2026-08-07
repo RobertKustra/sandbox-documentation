@@ -1,6 +1,6 @@
 # Sandbox Documentation
 
-This repository contains high-level usage documentation for the Sandbox workspace built from the `sandbox-*` repositories. To prepare home-lab with Kubernetes
+This repository contains high-level usage documentation for the Sandbox workspace built from the `sandbox-*` repositories. To prepare home-lab with Kubernetes with GitOps implementation
 
 ## Repositories in the Workspace
 
