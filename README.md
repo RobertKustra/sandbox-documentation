@@ -284,17 +284,19 @@ To disable these components, comment out or remove the relevant entries in the f
      # - ./environments/llm.yaml   # comment out when no GPU available
    ```
 
-2. **Disable `sandbox-ai-consumer` from dev/test/prod overlays** - remove the resource from each overlay:
+2. **Disable `sandbox-ai-consumer` in a selected environment** - remove the app overlay from the environment kustomization:
 
-   - File: [sandbox-cluster-config/apps/overlays/dev/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/overlays/dev/kustomization.yaml)
-   - File: [sandbox-cluster-config/apps/overlays/test/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/overlays/test/kustomization.yaml)
-   - File: [sandbox-cluster-config/apps/overlays/prod/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/apps/overlays/prod/kustomization.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/environments/dev/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/dev/kustomization.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/environments/test/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/test/kustomization.yaml)
+   - File: [sandbox-cluster-config/clusters/minikube/environments/prod/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/prod/kustomization.yaml)
    ```yaml
    resources:
-     # - ../../sandbox-ai-consumer/base   # comment out when no GPU / vLLM not deployed
+     # - ../../../../apps/sandbox-ai-consumer/overlays/<env>   # remove/comment for chosen env
    ```
 
-3. **Remove the `minikube-llm` dependency from dev/test/prod Flux Kustomizations** - otherwise Flux will block reconciliation waiting for the missing llm environment:
+   Note: in the current repo state, `test` already does not include `sandbox-ai-consumer`.
+
+3. **Update the matching Flux Kustomization for that environment** - remove `sandbox-ai-consumer` health check, and remove `minikube-llm` dependency if it is no longer needed:
 
    - File: [sandbox-cluster-config/clusters/minikube/environments/dev.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/dev.yaml)
    - File: [sandbox-cluster-config/clusters/minikube/environments/test.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/environments/test.yaml)
@@ -302,7 +304,9 @@ To disable these components, comment out or remove the relevant entries in the f
    ```yaml
    spec:
      dependsOn:
-       # - name: minikube-llm   # remove when llm environment is disabled
+       # - name: minikube-llm   # remove if no workload in this env depends on llm
+     healthChecks:
+       # remove sandbox-ai-consumer HelmRelease check for the same env
    ```
 
 After committing these changes Flux will skip the GPU-dependent components and all remaining environments will reconcile normally.
