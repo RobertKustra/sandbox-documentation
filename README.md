@@ -1,6 +1,8 @@
 # Sandbox Documentation
 
-This repository contains high-level usage documentation for the Sandbox workspace built from the `sandbox-*` repositories. To prepare home-lab with Kubernetes with GitOps implementation
+This repository contains high-level usage documentation for the Sandbox workspace built from the `sandbox-*` repositories. To prepare `home-lab` with Kubernetes & GitOps implementation.
+
+> **Remember**: the solution contained here are dedicated ONLY and exclusively for local testing of Kubernetes + LLM + GitOps.
 
 ## Repositories in the Workspace
 
@@ -8,6 +10,28 @@ This repository contains high-level usage documentation for the Sandbox workspac
 - [sandbox-helm-charts](https://github.com/RobertKustra/sandbox-helm-charts) - shared Helm charts for the sandbox apps, including `sandbox-nginx`, `sandbox-redis`, and `sandbox-vllm`.
 - [sandbox-env-values](https://github.com/RobertKustra/sandbox-env-values) - shared base values plus environment overlays used by Flux HelmReleases for dev, test, and prod.
 - [wsl-config](https://github.com/RobertKustra/wsl-config) - WSL configuration helpers.
+
+### Current cluster-config structure
+
+```text
+sandbox-cluster-config/
+|-- apps/                          # Per-service HelmRelease bases and environment overlays
+|   |-- sandbox-ai-consumer/
+|   |-- sandbox-nginx/
+|   `-- sandbox-redis/
+|-- bootstrap/flux-system-template/ # Reference bootstrap manifests
+|-- cluster-components/            # Shared cert-manager, Traefik, monitoring, LLM and operator stages
+|-- clusters/minikube/
+|   |-- environments/              # dev, test and prod workload stages
+|   |-- flux-system/               # Active Flux bootstrap and automation manifests
+|   `-- kustomization.yaml         # Active Minikube entrypoint
+|-- postgres/                      # PostgresCluster base and environment overlays
+|-- scripts/                       # Local setup helpers
+|-- sources/                       # External Git and Helm sources
+`-- utils/operators/postgres/      # PostgreSQL operator resources
+```
+
+The entrypoint includes external sources, Flux system resources, selected shared components, and selected environment stages. Definitions for `dev`, `test`, and `prod` exist, but the current Minikube entrypoint enables only `dev`. Monitoring and LLM are shared cluster components rather than application environments.
 
 ### Bonus 
 1. Simple app for LLM as consumer
@@ -26,30 +50,6 @@ Its main purpose is to:
 - generate or update matching overlays in `sandbox-env-values`
 - optionally regenerate Flux `sandbox-env-values-<env>` kustomizations from currently enabled cluster environments
 
-### Main inputs and outputs
-
-- Input: `cluster-config.yaml`
-- Input repositories: `sandbox-cluster-config`, `sandbox-env-values`
-- Tooling repository: `sandbox-scaffolder`
-- Primary output: environment manifests, overlays, and Flux image automation resources derived from the YAML config
-
-### Minimal command flow
-
-Run the config-driven scaffold flow:
-
-```bash
-cd sandbox-scaffolder
-make run HOST_REPOS_ROOT=<path-to-sandbox-repos>
-```
-
-Run sync-only maintenance flow:
-
-```bash
-cd sandbox-scaffolder
-make run-sync HOST_REPOS_ROOT=<path-to-sandbox-repos>
-```
-
-The default `make run` path expects `cluster-config.yaml` in the `sandbox-scaffolder` repository and applies it against the local `sandbox-cluster-config` and `sandbox-env-values` repositories mounted into the container runtime.
 
 ## CI/CD and pipeline overview
 
@@ -66,34 +66,31 @@ In the `sandbox-ai-consumer` repository, the following workflows are available:
 
 The expected promotion path is:
 
-`feat/*` or `feature/*` -> `development` -> `main`
+`feat/*` or `feature/*` -> `development` -> `main` with `release` tag
 
 This ensures that changes are reviewed, validated, and promoted through the correct environments before release.
 
 ### Flux image automation
 
-The Flux GitOps setup also includes image automation for the application container images. The configuration in [sandbox-cluster-config/clusters/minikube/flux-system/image-automation.yaml](sandbox-cluster-config/clusters/minikube/flux-system/image-automation.yaml) defines:
+The Flux GitOps setup also includes image automation for application container images. The current active development flow uses:
 
-- `ImageRepository` resources for the `dev` and `prod` GHCR images:
-  - `ghcr.io/robertkustra/dev/sandbox-ai-consumer`
-  - `ghcr.io/robertkustra/prod/sandbox-ai-consumer`
-- `ImagePolicy` resources that allow Flux to evaluate available tags from those repositories.
-- `ImageUpdateAutomation` resources that update the image references in the values overlays for the `sandbox-env-values` repository.
+- `clusters/minikube/environments/dev/image-reflector.yaml` for the `ImageRepository` and `ImagePolicy` that scan `ghcr.io/robertkustra/dev/sandbox-ai-consumer`.
+- `clusters/minikube/flux-system/image-automation.yaml` for the `ImageUpdateAutomation` that writes the selected tag to `sandbox-env-values/overlays/dev`.
 
-In practice, this means that once a new image is published to GHCR, Flux can automatically detect it and update the corresponding values files in the `dev` and `prod` overlays, as long as the required `ghcr-pull-secret` is available in the `flux-system` namespace.
+Once a new image is published to GHCR, Flux can detect it and commit the selected tag to the development values overlay, provided that `ghcr-pull-secret` is available in the `flux-system` namespace and the Git credentials permit writes to `sandbox-env-values`.
 
 ## What this setup does
 
-This workspace defines a GitOps flow for a Minikube cluster using Flux. It supports:
+This workspace defines a GitOps flow for a Minikube cluster using Flux. It provides:
 
-
-- multiple environments: `dev`, `test`, `prod`, `monitoring`, and `llm`
+- application environment definitions for `dev`, `test`, and `prod`; currently only `dev` is enabled
+- shared cluster components for monitoring and LLM workloads
 - Helm chart deployments managed by Flux
 - shared and environment-specific Helm values stored separately from cluster configuration
 - a monitoring stack with Prometheus, Grafana, Loki/Promtail, and Alertmanager
 - Traefik Ingress routes for application and monitoring access
 
-**Warning:**  If your computer does not have a dedicated NVIDIA graphics processor that supports CUDA, do not install the `llm` and `ai-consumer` modules. The procedure is described later in this documentation.
+>**Warning:**  If your computer does not have a dedicated NVIDIA graphics processor that supports CUDA, do not install the `llm` and `ai-consumer` modules. The procedure is described later in this documentation.
 
 ## How to use it
 
@@ -107,7 +104,8 @@ Run the prerequisite script to install required packages:
 
 
 ```bash
-bash wsl-setup.sh
+chmod +x wsl-setup.sh
+wsl-setup.sh
 ```
 
 The script installs the following packages for the demo environment:
@@ -129,6 +127,8 @@ minikube start \
   --driver=docker \
   --container-runtime=docker \
   --gpus=all
+  --cpus=4 #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
+  --memory=4608mb #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
 
 kubectl get node minikube \
   -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
@@ -170,21 +170,25 @@ kubectl get helmreleases -A
 
 ### 4. Deploy and verify environments
 
-The following environments are managed separately:
+The repository contains separate application stages for:
 
 - `dev` - `clusters/minikube/environments/dev`
 - `test` - `clusters/minikube/environments/test`
 - `prod` - `clusters/minikube/environments/prod`
-- `monitoring` - `clusters/minikube/environments/monitoring`
-- `llm` - `clusters/minikube/environments/llm`
 
-Each environment includes a Kustomization pointing to an app overlay under `apps/overlays/<env>`.
+Only stages referenced by `clusters/minikube/kustomization.yaml` are deployed; currently this is `dev`. Shared services use separate Flux stages:
+
+- `monitoring` - `cluster-components/monitoring.yaml`, deploying `cluster-components/monitoring`
+- `llm` - `cluster-components/llm.yaml`, deploying `cluster-components/llm`
+
+Each application stage composes service-specific overlays under `apps/<service>/overlays/<env>` and the matching `postgres/overlays/<env>`.
 
 For example, the dev environment deploys:
 
-- `apps/base/sandbox-nginx.yaml` - shared HelmRelease definition for `sandbox-nginx`
-- `apps/base/ingress.yaml` - shared Ingress definition
-- `apps/overlays/dev/kustomization.yaml` - dev-specific overlay (including host `sandbox-nginx.dev.local`)
+- `apps/sandbox-nginx/overlays/dev`
+- `apps/sandbox-redis/overlays/dev`
+- `apps/sandbox-ai-consumer/overlays/dev`
+- `postgres/overlays/dev`
 
 ### 5. Access services
 
@@ -276,12 +280,12 @@ If experiencing OOM errors even with this minimal profile:
 
 To disable these components, comment out or remove the relevant entries in the following files:
 
-1. **Disable the `llm` environment entirely** - remove the reference from the cluster kustomization:
+1. **Disable the shared `llm` component** - remove the reference from the cluster kustomization:
 
    - File: [sandbox-cluster-config/clusters/minikube/kustomization.yaml](https://github.com/RobertKustra/sandbox-cluster-config/blob/development/clusters/minikube/kustomization.yaml)
    ```yaml
    resources:
-     # - ./environments/llm.yaml   # comment out when no GPU available
+     # - ../../cluster-components/llm.yaml   # comment out when no GPU is available
    ```
 
 2. **Disable `sandbox-ai-consumer` in a selected environment** - remove the app overlay from the environment kustomization:
@@ -409,15 +413,13 @@ To change application behavior:
   - `sandbox-helm-charts/charts/sandbox-nginx`
   - `sandbox-helm-charts/charts/sandbox-redis`
   - `sandbox-helm-charts/charts/sandbox-vllm`
+  - `sandbox-helm-charts/charts/sandbox-ai-consumer`
 - edit shared values in `sandbox-env-values/base` and environment overrides in `sandbox-env-values/overlays/dev`, `sandbox-env-values/overlays/test`, or `sandbox-env-values/overlays/prod`
-- update shared app manifests in:
-  - `sandbox-cluster-config/apps/base`
-- environment overlays in:
-  - `sandbox-cluster-config/apps/overlays/<env>`, 
-- LLM manifests in:
-  - `sandbox-cluster-config/apps/llm`
-- Monitoring manifests in:
-  - `sandbox-cluster-config/apps/monitoring`
+- update shared app manifests in `sandbox-cluster-config/apps/<service>/base`
+- update environment overlays in `sandbox-cluster-config/apps/<service>/overlays/<env>`
+- update LLM manifests in `sandbox-cluster-config/cluster-components/llm`
+- update monitoring manifests in `sandbox-cluster-config/cluster-components/monitoring`
+- update PostgreSQL instances in `sandbox-cluster-config/postgres/base` and `postgres/overlays/<env>`
 
 Then commit and push the changes, and let Flux reconcile the cluster.
 
@@ -427,18 +429,21 @@ Then commit and push the changes, and let Flux reconcile the cluster.
 
 This repository contains the Flux GitOps configuration:
 
-- `clusters/minikube/flux-system` - Flux resources and HelmRepository sources
-- `clusters/minikube/environments/*` - environment-specific Kustomizations
-- `namespaces/*` - namespace manifests
-- `apps/*` - HelmRelease and Ingress manifests for each environment
-- `sources/*` - GitRepository definitions for external repo sources
+- `clusters/minikube/kustomization.yaml` - cluster entrypoint selecting sources, components, and environments
+- `clusters/minikube/flux-system` - active Flux bootstrap and automation resources
+- `clusters/minikube/environments/*` - application environment stages and workload composition
+- `apps/<service>/base` - shared HelmRelease and application resources
+- `apps/<service>/overlays/<env>` - environment-specific application overlays
+- `cluster-components/*` - shared cluster services and their Flux Kustomization stages
+- `postgres/*` - shared and environment-specific PostgresCluster manifests
+- `sources/*` - external GitRepository and HelmRepository definitions
 
 Important components:
 
-- `apps/monitoring` - monitoring stack with Prometheus, Grafana, Loki-stack, Promtail, and Alertmanager
-- `apps/llm` - `sandbox-vllm` HelmRelease, ingress, and smoke-test-enabled deployment configuration
-- `apps/overlays/<env>/kustomization.yaml` - environment-specific overlay for `sandbox-nginx` resources (including Ingress host)
-- `apps/overlays/<env>/kustomization.yaml` - also contains `sandbox-redis-auth` Secret generation used by the `sandbox-redis` HelmRelease
+- `cluster-components/monitoring` - Prometheus, Grafana, Loki-stack, Promtail, Alertmanager, Jaeger, and GPU exporter resources
+- `cluster-components/llm` - `sandbox-vllm` HelmRelease and ingress configuration
+- `cluster-components/traefik` - Traefik installation resources
+- `cluster-components/cert-manager` and `cluster-components/cert-manager-issuers` - certificate management resources
 
 ### sandbox-helm-charts
 
@@ -455,11 +460,12 @@ Current charts:
 
 Contains Helm values for each environment:
 
-- `dev/` - values for development deployments
-- `test/` - values for test deployments
-- `prod/` - values for production deployments
+- `base/` - shared Helm values
+- `overlays/dev/` - development overrides
+- `overlays/test/` - test overrides
+- `overlays/prod/` - production overrides
 
-Current rollout scope for `sandbox-ai-consumer` is `dev` and `test`.
+The repository contains `sandbox-ai-consumer` values for all three overlays. Deployment scope is controlled independently by the active stages in `sandbox-cluster-config`.
 
 ### wsl-config
 
@@ -468,7 +474,7 @@ Contains WSL-specific setup instructions and helper scripts for using the worksp
 ## Notes
 
 - Traefik is used as the Ingress controller in this setup.
-- The monitoring stack is isolated in the `monitoring` environment and does not automatically deploy into dev/test/prod unless the corresponding Kustomization is updated.
+- The monitoring stack runs as the shared `minikube-monitoring` cluster component, independently of application namespaces.
 - Flux applies the configuration from `sandbox-cluster-config` and references external sources from `sandbox-helm-charts` and `sandbox-env-values`.
 
 ## Next steps
@@ -477,7 +483,7 @@ Contains WSL-specific setup instructions and helper scripts for using the worksp
 - Manage environment-specific settings in `sandbox-env-values`
 - Add more environments or services under `sandbox-cluster-config`
 - Use the existing `monitoring` app package to extend alerts and dashboards
-- TODO: Configure Alertmanager notifications for Discord (webhook or relay) in `sandbox-cluster-config/apps/monitoring/alertmanager.yaml`.
+- TODO: Configure Alertmanager notifications for Discord (webhook or relay) in `sandbox-cluster-config/cluster-components/monitoring/alertmanager.yaml`.
 
 ## Repository dependency diagram
 
