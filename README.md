@@ -325,6 +325,8 @@ minikube start \
   --driver=docker \
   --container-runtime=docker \
   --gpus=all
+  --cpus=4 #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
+  --memory=4608mb #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
 
 kubectl get node minikube \
   -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
