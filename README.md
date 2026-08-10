@@ -507,3 +507,6 @@ sandbox-env-values   sandbox-helm-charts
 
 This means `sandbox-cluster-config` orchestrates deployments using the other two repositories.
 
+# Example output of `sandbox-ai-consumer`
+
+![Results-of-question](./assets/minikube-details.PNG)
