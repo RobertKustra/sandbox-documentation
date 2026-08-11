@@ -207,6 +207,17 @@ You may need to add these entries to your `/etc/hosts` file to resolve them loca
 
 The `sandbox-vllm` service requires specific hardware to operate properly. The requirements vary depending on the model size and inference parameters.
 
+#### Known Issues
+
+During the first cluster startup, pulling the `vllm/vllm-openai` image may take a long time. As a result, the `sandbox-vllm` HelmRelease and its dependent `minikube-llm` Kustomization may time out. This can prevent the `dev`, `test`, and `prod` environments from being deployed, even after the local vLLM model has started successfully.
+
+After the image has been pulled and vLLM is running, force reconciliation in dependency order:
+
+```bash
+flux reconcile hr sandbox-vllm --with-source --force -n llm
+flux reconcile kustomization minikube-llm --with-source -n flux-system
+```
+
 #### Current Configuration
 
 > **Warning:** Depending on your local machine, you need to adjust the following parameters to the available resources
