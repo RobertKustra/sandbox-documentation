@@ -174,8 +174,8 @@ The diagram includes only the `dev` environment referenced by the active Minikub
 
 ```mermaid
 flowchart LR
-  Charts[sandbox-helm-charts<br/>application charts]
-  Values[sandbox-env-values<br/>base + environment overlay]
+  Charts[ sandbox-helm-charts<br/>application charts]
+  Values[ sandbox-env-values<br/>base + environment overlay]
   GHCR[GHCR<br/>sandbox-ai-consumer images]
 
   Shared[Shared cluster services<br/>Traefik ingress<br/>Monitoring and logs<br/>Crunchy Postgres operator]
