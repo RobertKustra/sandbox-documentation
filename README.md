@@ -92,6 +92,107 @@ This workspace defines a GitOps flow for a Minikube cluster using Flux. It provi
 
 >**Warning:**  If your computer does not have a dedicated NVIDIA graphics processor that supports CUDA, do not install the `llm` and `ai-consumer` modules. The procedure is described later in this documentation.
 
+## Architecture diagrams
+
+The diagrams below represent resources enabled by `sandbox-cluster-config/clusters/minikube/kustomization.yaml`. HelmReleases and the Postgres operator create additional Deployments, StatefulSets, DaemonSets, Services, Jobs, and storage resources from their charts and custom resources.
+
+### Active cluster resources
+
+```mermaid
+flowchart TB
+  subgraph FluxNS[namespace: flux-system]
+    Controllers[Flux controllers<br/>source, kustomize, helm,<br/>image reflector, image automation]
+    GitSources[GitRepository sources<br/>cluster-config, helm-charts, env-values]
+    HelmSources[HelmRepository sources<br/>Prometheus, Grafana, Crunchy PGO,<br/>NVIDIA, Traefik, cert-manager]
+    FluxStages[Flux Kustomizations<br/>core components, env-values-dev, minikube-dev]
+    ImageResources[ImageRepository + ImagePolicy<br/>ImageUpdateAutomation]
+    FluxSecrets[Secrets<br/>GHCR pull + Git SSH write access]
+  end
+
+  subgraph PostgresNS[namespace: postgres-operator]
+    PGO[HelmRelease: crunchy-postgres-operator<br/>PGO controller workloads]
+  end
+
+  subgraph CertNS[namespace: cert-manager]
+    CertManager[HelmRelease: cert-manager<br/>controller, webhook, cainjector]
+    PKI[Certificate: sandbox-ca<br/>ClusterIssuers: selfsigned + sandbox-ca]
+  end
+
+  subgraph TraefikNS[namespace: traefik]
+    Traefik[HelmRelease: traefik<br/>ingress controller + Service]
+  end
+
+  subgraph MonitoringNS[namespace: monitoring]
+    MonitoringCharts[HelmReleases<br/>Prometheus, Grafana, Loki, Promtail,<br/>Alertmanager, GPU exporter]
+    Jaeger[Deployment + Service: Jaeger]
+    MonitoringIngress[Ingress<br/>Grafana, Alertmanager, Jaeger]
+  end
+
+  subgraph LLMNS[namespace: llm]
+    VLLM[HelmRelease: sandbox-vllm<br/>inference workload + Service + smoke test]
+    VLLMIngress[Ingress: sandbox-vllm]
+    HFSecret[Secret: hf-token<br/>model cache PVC]
+  end
+
+  subgraph DevNS[namespace: dev - active]
+    EnvConfig[ConfigMaps from sandbox-env-values<br/>base + dev values]
+    AppReleases[HelmReleases<br/>sandbox-nginx, sandbox-redis,<br/>sandbox-ai-consumer]
+    AppWorkloads[Chart workloads<br/>Deployments + Services]
+    NginxIngress[Ingress: sandbox-nginx]
+    Database[PostgresCluster: sandbox-postgres<br/>database pods, Services, PVCs]
+    PullSecret[Secret: ghcr-pull-secret]
+  end
+
+  GitSources --> Controllers
+  HelmSources --> Controllers
+  Controllers --> FluxStages
+  Controllers --> ImageResources
+  FluxStages --> PGO
+  FluxStages --> CertManager
+  CertManager --> PKI
+  FluxStages --> Traefik
+  PKI --> MonitoringCharts
+  Traefik --> MonitoringIngress
+  MonitoringCharts --> Jaeger
+  MonitoringCharts --> VLLM
+  PGO --> Database
+  FluxStages --> EnvConfig
+  EnvConfig --> AppReleases
+  GitSources --> AppReleases
+  AppReleases --> AppWorkloads
+  VLLM --> AppWorkloads
+  Traefik --> VLLMIngress
+  Traefik --> NginxIngress
+  ImageResources --> EnvConfig
+  FluxSecrets --> ImageResources
+  PullSecret --> AppWorkloads
+```
+
+### Environment composition
+
+The diagram includes only the `dev` environment referenced by the active Minikube entrypoint.
+
+```mermaid
+flowchart LR
+  Charts[sandbox-helm-charts<br/>application charts]
+  Values[sandbox-env-values<br/>base + environment overlay]
+  GHCR[GHCR<br/>sandbox-ai-consumer images]
+
+  Shared[Shared cluster services<br/>Traefik ingress<br/>Monitoring and logs<br/>Crunchy Postgres operator]
+  LLM[Shared LLM service<br/>sandbox-vllm in namespace llm]
+
+  subgraph Dev[dev - ACTIVE]
+    DevApps[NGINX + Redis + AI consumer]
+    DevDB[PostgresCluster]
+  end
+
+  Charts --> DevApps
+  Values -->|overlays/dev| DevApps
+  GHCR --> DevApps
+  Shared --> Dev
+  LLM -->|VLLM endpoint| DevApps
+```
+
 ## How to use it
 
 ### 1. Prepare the workspace
