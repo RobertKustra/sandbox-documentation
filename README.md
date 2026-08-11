@@ -101,45 +101,45 @@ The diagrams below represent resources enabled by `sandbox-cluster-config/cluste
 ```mermaid
 flowchart TB
   subgraph FluxNS[namespace: flux-system]
-    Controllers["Flux controllers<br/>source, kustomize, helm,<br/>image reflector, image automation"]
-    GitSources["GitRepository sources<br/>cluster-config, helm-charts, env-values"]
-    HelmSources["HelmRepository sources<br/>Prometheus, Grafana, Crunchy PGO,<br/>NVIDIA, Traefik, cert-manager"]
-    FluxStages["Flux Kustomizations<br/>core components, env-values-dev, minikube-dev"]
-    ImageResources["ImageRepository + ImagePolicy<br/>ImageUpdateAutomation"]
-    FluxSecrets["Secrets<br/>GHCR pull + Git SSH write access"]
+    Controllers["Flux controllers: source, kustomize, helm, image reflector, image automation"]
+    GitSources["GitRepository sources: cluster-config, helm-charts, env-values"]
+    HelmSources["HelmRepository sources: Prometheus, Grafana, Crunchy PGO, NVIDIA, Traefik, cert-manager"]
+    FluxStages["Flux Kustomizations: core components, env-values-dev, minikube-dev"]
+    ImageResources["ImageRepository + ImagePolicy + ImageUpdateAutomation"]
+    FluxSecrets["Secrets: GHCR pull + Git SSH write access"]
   end
 
   subgraph PostgresNS[namespace: postgres-operator]
-    PGO["HelmRelease: crunchy-postgres-operator<br/>PGO controller workloads"]
+    PGO["HelmRelease: crunchy-postgres-operator; PGO controller workloads"]
   end
 
   subgraph CertNS[namespace: cert-manager]
-    CertManager["HelmRelease: cert-manager<br/>controller, webhook, cainjector"]
-    PKI["Certificate: sandbox-ca<br/>ClusterIssuers: selfsigned + sandbox-ca"]
+    CertManager["HelmRelease: cert-manager; controller, webhook, cainjector"]
+    PKI["Certificate: sandbox-ca; ClusterIssuers: selfsigned + sandbox-ca"]
   end
 
   subgraph TraefikNS[namespace: traefik]
-    Traefik["HelmRelease: traefik<br/>ingress controller + Service"]
+    Traefik["HelmRelease: traefik; ingress controller + Service"]
   end
 
   subgraph MonitoringNS[namespace: monitoring]
-    MonitoringCharts["HelmReleases<br/>Prometheus, Grafana, Loki, Promtail,<br/>Alertmanager, GPU exporter"]
+    MonitoringCharts["HelmReleases: Prometheus, Grafana, Loki, Promtail, Alertmanager, GPU exporter"]
     Jaeger[Deployment + Service: Jaeger]
-    MonitoringIngress["Ingress<br/>Grafana, Alertmanager, Jaeger"]
+    MonitoringIngress["Ingress: Grafana, Alertmanager, Jaeger"]
   end
 
   subgraph LLMNS[namespace: llm]
-    VLLM["HelmRelease: sandbox-vllm<br/>inference workload + Service + smoke test"]
+    VLLM["HelmRelease: sandbox-vllm; inference workload + Service + smoke test"]
     VLLMIngress[Ingress: sandbox-vllm]
-    HFSecret["Secret: hf-token<br/>model cache PVC"]
+    HFSecret["Secret: hf-token + model cache PVC"]
   end
 
   subgraph DevNS[namespace: dev - active]
-    EnvConfig["ConfigMaps from sandbox-env-values<br/>base + dev values"]
-    AppReleases["HelmReleases<br/>sandbox-nginx, sandbox-redis,<br/>sandbox-ai-consumer"]
-    AppWorkloads["Chart workloads<br/>Deployments + Services"]
+    EnvConfig["ConfigMaps from sandbox-env-values: base + dev values"]
+    AppReleases["HelmReleases: sandbox-nginx, sandbox-redis, sandbox-ai-consumer"]
+    AppWorkloads["Chart workloads: Deployments + Services"]
     NginxIngress[Ingress: sandbox-nginx]
-    Database["PostgresCluster: sandbox-postgres<br/>database pods, Services, PVCs"]
+    Database["PostgresCluster: sandbox-postgres; database pods, Services, PVCs"]
     PullSecret[Secret: ghcr-pull-secret]
   end
 
@@ -174,12 +174,12 @@ The diagram includes only the `dev` environment referenced by the active Minikub
 
 ```mermaid
 flowchart LR
-  Charts["sandbox-helm-charts<br/>application charts"]
-  Values["sandbox-env-values<br/>base + environment overlay"]
-  GHCR["GHCR<br/>sandbox-ai-consumer images"]
+  Charts["sandbox-helm-charts: application charts"]
+  Values["sandbox-env-values: base + environment overlay"]
+  GHCR["GHCR: sandbox-ai-consumer images"]
 
-  Shared["Shared cluster services<br/>Traefik ingress<br/>Monitoring and logs<br/>Crunchy Postgres operator"]
-  LLM["Shared LLM service<br/>sandbox-vllm in namespace llm"]
+  Shared["Shared cluster services: Traefik, monitoring, logs, Crunchy Postgres operator"]
+  LLM["Shared LLM service: sandbox-vllm in namespace llm"]
 
   subgraph Dev[dev - ACTIVE]
     DevApps[NGINX + Redis + AI consumer]
