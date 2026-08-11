@@ -168,6 +168,37 @@ kubectl get kustomizations -A
 kubectl get helmreleases -A
 ```
 
+### 3a. Configure GHCR pull secrets
+
+Create a GitHub Personal Access Token (PAT) with the `read:packages` permission.
+
+Set your GitHub username and PAT locally, then create the `ghcr-pull-secret` secret in the `flux-system` namespace:
+
+```bash
+export GHCR_USERNAME=<your-github-username>
+export GHCR_PAT=<your-github-pat>
+
+kubectl create secret docker-registry ghcr-pull-secret \
+  --namespace=flux-system \
+  --docker-server=ghcr.io \
+  --docker-username="$GHCR_USERNAME" \
+  --docker-password="$GHCR_PAT"
+```
+
+The same secret must exist in every enabled environment namespace that pulls images from GHCR, for example `dev`, `test`, and `prod`. Create the namespaces first if they do not exist, then run:
+
+```bash
+for namespace in dev test prod; do
+  kubectl create secret docker-registry ghcr-pull-secret \
+    --namespace="$namespace" \
+    --docker-server=ghcr.io \
+    --docker-username="$GHCR_USERNAME" \
+    --docker-password="$GHCR_PAT"
+done
+```
+
+Only include namespaces enabled for the current cluster. Do not commit the PAT or the generated Secret manifests to Git in plaintext. For `MINIKUBE` example as `home-lab` you can use one `PAT` for all tested envs, but for `REAL SCENARIO` each env should be isolated from each others.
+ 
 ### 4. Deploy and verify environments
 
 The repository contains separate application stages for:
