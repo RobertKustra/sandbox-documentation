@@ -105,7 +105,7 @@ Run the prerequisite script to install required packages:
 
 ```bash
 chmod +x wsl-setup.sh
-wsl-setup.sh
+./wsl-setup.sh
 ```
 
 The script installs the following packages for the demo environment:
