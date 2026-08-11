@@ -197,7 +197,8 @@ for namespace in dev test prod; do
 done
 ```
 
-Only include namespaces enabled for the current cluster. Do not commit the PAT or the generated Secret manifests to Git in plaintext. For `MINIKUBE` example as `home-lab` you can use one `PAT` for all tested envs, but for `REAL SCENARIO` each env should be isolated from each others.
+Only include namespaces enabled for the current cluster. Do not commit the PAT or the generated Secret manifests to Git in plaintext. For `MINIKUBE` example as `home-lab` you can use one `PAT` for all tested envs, but for `REAL SCENARIO` each envs should be isolated from each others.
+You should also consider using a secrets operator, i.e. `External Secret` + `Key Vault`/`Hashicorp Vault`/`AWS Secret Manager`/etc.
  
 ### 4. Deploy and verify environments
 
