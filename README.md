@@ -197,9 +197,46 @@ for namespace in dev test prod; do
 done
 ```
 
-Only include namespaces enabled for the current cluster. Do not commit the PAT or the generated Secret manifests to Git in plaintext. For `MINIKUBE` example as `home-lab` you can use one `PAT` for all tested envs, but for `REAL SCENARIO` each envs should be isolated from each others.
-You should also consider using a secrets operator, i.e. `External Secret` + `Key Vault`/`Hashicorp Vault`/`AWS Secret Manager`/etc.
- 
+> **Assumptions**: Only include namespaces enabled for the current cluster. Do not commit the PAT or the generated Secret manifests to Git in plaintext. For `MINIKUBE` example as `home-lab` you can use one `PAT` for all tested envs, but for `REAL SCENARIO` each envs should be isolated from each others. You should also consider using a secrets operator, i.e. `External Secret` + `Key Vault`/`Hashicorp Vault`/`AWS Secret Manager`/etc.
+
+### 3b. Configure SSH write access for Flux image automation
+
+Flux image automation commits updated image tags to the `development` branch of the `sandbox-env-values` repository. Create a dedicated SSH key and add its public key in GitHub under `sandbox-env-values` > **Settings** > **Deploy keys** with **Allow write access** enabled:
+
+```bash
+TMP_DIR="$HOME/.ssh"
+KEY_FILE="$TMP_DIR/id_ed25519_flux_image_automation"
+mkdir -p "$TMP_DIR"
+ssh-keygen -t ed25519 -a 100 \
+  -C "flux-image-automation" \
+  -f "$KEY_FILE" \
+  -N ""
+ssh-keyscan -H github.com >> "$TMP_DIR/known_hosts"
+
+cat "$KEY_FILE.pub"
+```
+
+After adding the displayed public key to GitHub, create the secret referenced by `GitRepository/sandbox-env-values` in the `flux-system` namespace:
+
+```bash
+kubectl -n flux-system create secret generic sandbox-env-values-write \
+  --from-file=identity="$KEY_FILE" \
+  --from-file=identity.pub="$KEY_FILE.pub" \
+  --from-file=known_hosts="$TMP_DIR/known_hosts" \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Verify the source and image automation after creating the secret:
+
+```bash
+flux reconcile source git sandbox-env-values -n flux-system
+flux get image update -n flux-system
+```
+
+> **Production consideration**: This local `home-lab` example uses a key without a passphrase. For a real environment, consider encrypting the private key with a strong passphrase and adding it to the Kubernetes Secret as the `password` field. Flux can then decrypt the key automatically without an interactive prompt. Protect the Secret with an appropriate secrets management solution and access controls.
+
+*Do not commit* the private SSH key or the generated Secret manifest to Git.
+
 ### 4. Deploy and verify environments
 
 The repository contains separate application stages for:
