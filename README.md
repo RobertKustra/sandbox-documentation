@@ -379,13 +379,13 @@ The `sandbox-vllm` service requires specific hardware to operate properly. The r
 
 #### Known Issues
 
-During the first cluster startup, pulling the `vllm/vllm-openai` image may take a long time. As a result, the `sandbox-vllm` HelmRelease and its dependent `minikube-llm` Kustomization may time out. This can prevent the `dev`, `test`, and `prod` environments from being deployed, even after the local vLLM model has started successfully.
+During the first cluster startup, pulling the `vllm/vllm-openai` image and downloading the model can take a long time. The configuration allows up to 15 minutes for the vLLM health smoke test, 20 minutes for the Helm release operation, and 25 minutes for the dependent `minikube-llm` Flux Kustomization. This prevents the initial image pull from being reported as a failed deployment while the workload is still starting.
 
-After the image has been pulled and vLLM is running, force reconciliation in dependency order:
+If the workload still exceeds these limits, inspect the pod events and HelmRelease status before retrying:
 
 ```bash
-flux reconcile hr sandbox-vllm --with-source --force -n llm
-flux reconcile kustomization minikube-llm --with-source -n flux-system
+kubectl -n llm describe pod -l app.kubernetes.io/instance=sandbox-vllm
+flux get helmreleases -n llm
 ```
 
 #### Current Configuration
