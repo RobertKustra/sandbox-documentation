@@ -79,45 +79,6 @@ The Flux GitOps setup also includes image automation for application container i
 
 Once a new image is published to GHCR, Flux can detect it and commit the selected tag to the development values overlay, provided that `ghcr-pull-secret` is available in the `flux-system` namespace and the Git credentials permit writes to `sandbox-env-values`.
 
-### Flux reconciliation intervals
-
-Flux periodically reconciles resources according to their `spec.interval`. A dependency update or a manual reconcile can trigger processing earlier, so the interval is not a guaranteed deployment delay.
-
-| Resource | Interval | Scope or exceptions |
-| --- | --- | --- |
-| `GitRepository` | 1 minute | `flux-system`, `sandbox-env-values`, and `sandbox-helm-charts` |
-| `HelmRepository` | 1 minute | Grafana, Prometheus Community, Traefik, and DCGM exporter |
-| `HelmRepository` | 10 minutes | Crunchy Data PGO |
-| `HelmRepository` | 1 hour | cert-manager and External Secrets |
-| Cluster and environment `Kustomization` | 10 minutes | `flux-system`, shared cluster components, and `minikube-<env>` stages |
-| Environment values `Kustomization` | 5 minutes | `sandbox-env-values-dev`, `sandbox-env-values-test`, and `sandbox-env-values-prod` |
-| Application and shared-service `HelmRelease` | 5 minutes | Sandbox applications, vLLM, Traefik, and monitoring releases |
-| Operator `HelmRelease` | 10 minutes | cert-manager and Crunchy Data PGO |
-| `ImageRepository` | 1 minute | Scans the configured container registry |
-| `ImageUpdateAutomation` | 1 minute | Writes selected image tags to the environment values repository |
-| `ImagePolicy` | Event-driven | Re-evaluated when its referenced `ImageRepository` is updated; it has no separate `spec.interval` |
-
-The end-to-end propagation time is composed of several independent reconciliations. For example, Flux may need to fetch a Git source, apply an environment-values `Kustomization`, and then reconcile the affected `HelmRelease`. Controllers also add jitter to distribute API load, so observed execution times do not occur at exact wall-clock boundaries.
-
-Inspect the effective intervals on the cluster:
-
-```bash
-kubectl -n flux-system get kustomizations \
-  -o custom-columns='NAME:.metadata.name,INTERVAL:.spec.interval'
-kubectl -n flux-system get gitrepositories,helmrepositories,imagerepositories,imageupdateautomations \
-  -o custom-columns='KIND:.kind,NAME:.metadata.name,INTERVAL:.spec.interval'
-kubectl get helmreleases -A \
-  -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,INTERVAL:.spec.interval'
-```
-
-Trigger reconciliation manually when waiting for the periodic interval is not desirable:
-
-```bash
-flux reconcile source git flux-system -n flux-system
-flux reconcile kustomization flux-system -n flux-system --with-source
-flux reconcile helmrelease <release-name> -n <namespace> --with-source
-```
-
 ## What this setup does
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It provides:
@@ -730,3 +691,42 @@ This means `sandbox-cluster-config` orchestrates deployments using the other two
 # Example output of `sandbox-ai-consumer`
 
 ![Results-of-question](./assets/minikube-details.PNG)
+
+### Flux reconciliation intervals
+
+Flux periodically reconciles resources according to their `spec.interval`. A dependency update or a manual reconcile can trigger processing earlier, so the interval is not a guaranteed deployment delay.
+
+| Resource | Interval | Scope or exceptions |
+| --- | --- | --- |
+| `GitRepository` | 1 minute | `flux-system`, `sandbox-env-values`, and `sandbox-helm-charts` |
+| `HelmRepository` | 1 minute | Grafana, Prometheus Community, Traefik, and DCGM exporter |
+| `HelmRepository` | 10 minutes | Crunchy Data PGO |
+| `HelmRepository` | 1 hour | cert-manager and External Secrets |
+| Cluster and environment `Kustomization` | 10 minutes | `flux-system`, shared cluster components, and `minikube-<env>` stages |
+| Environment values `Kustomization` | 5 minutes | `sandbox-env-values-dev`, `sandbox-env-values-test`, and `sandbox-env-values-prod` |
+| Application and shared-service `HelmRelease` | 5 minutes | Sandbox applications, vLLM, Traefik, and monitoring releases |
+| Operator `HelmRelease` | 10 minutes | cert-manager and Crunchy Data PGO |
+| `ImageRepository` | 1 minute | Scans the configured container registry |
+| `ImageUpdateAutomation` | 1 minute | Writes selected image tags to the environment values repository |
+| `ImagePolicy` | Event-driven | Re-evaluated when its referenced `ImageRepository` is updated; it has no separate `spec.interval` |
+
+The end-to-end propagation time is composed of several independent reconciliations. For example, Flux may need to fetch a Git source, apply an environment-values `Kustomization`, and then reconcile the affected `HelmRelease`. Controllers also add jitter to distribute API load, so observed execution times do not occur at exact wall-clock boundaries.
+
+Inspect the effective intervals on the cluster:
+
+```bash
+kubectl -n flux-system get kustomizations \
+  -o custom-columns='NAME:.metadata.name,INTERVAL:.spec.interval'
+kubectl -n flux-system get gitrepositories,helmrepositories,imagerepositories,imageupdateautomations \
+  -o custom-columns='KIND:.kind,NAME:.metadata.name,INTERVAL:.spec.interval'
+kubectl get helmreleases -A \
+  -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,INTERVAL:.spec.interval'
+```
+
+Trigger reconciliation manually when waiting for the periodic interval is not desirable:
+
+```bash
+flux reconcile source git flux-system -n flux-system
+flux reconcile kustomization flux-system -n flux-system --with-source
+flux reconcile helmrelease <release-name> -n <namespace> --with-source
+```
