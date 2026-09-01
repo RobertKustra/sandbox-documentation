@@ -691,7 +691,8 @@ This means `sandbox-cluster-config` orchestrates deployments using the other two
 # Example output of `sandbox-ai-consumer`
 
 ![Results-of-question](./assets/minikube-details.PNG)
-
+## We have to HIDE 😱
+![OverHeat-answers](./assets/ai-model-overheat-answers.png)
 ### Flux reconciliation intervals
 
 Flux periodically reconciles resources according to their `spec.interval`. A dependency update or a manual reconcile can trigger processing earlier, so the interval is not a guaranteed deployment delay.
