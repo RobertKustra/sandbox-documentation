@@ -39,46 +39,6 @@ The entrypoint includes external sources, Flux system resources, selected shared
 2. Scaffold environments 
     - [sandbox-scaffolder](https://github.com/RobertKustra/sandbox-scaffolder) - separate scaffold tool used to generate and sync environment manifests for `sandbox-cluster-config` and `sandbox-env-values`.
 
-## Scaffold workflow
-
-Environment scaffolding is handled by the separate `sandbox-scaffolder` repository.
-
-Its main purpose is to:
-
-- read a `cluster-config.yaml` input file
-- generate or update environment manifests in `sandbox-cluster-config`
-- generate or update matching overlays in `sandbox-env-values`
-- optionally regenerate Flux `sandbox-env-values-<env>` kustomizations from currently enabled cluster environments
-
-
-## CI/CD and pipeline overview
-
-The sandbox workspace uses GitHub Actions pipelines in the application repositories to automate validation and image publishing.
-
-### sandbox-ai-consumer pipelines
-
-In the `sandbox-ai-consumer` repository, the following workflows are available:
-
-- `Build and push Docker image` - builds and pushes the application container image to GHCR on pushes to `development` and `main`, and can also be triggered manually. The workflow checks out the repository, resolves the target environment and tag, logs in to GHCR, verifies whether the image already exists, and only then runs the build/push step. On `main`, it also creates a release Git tag after a successful publish.
-- `Validate PR source policy` - validates pull requests against the repository promotion rules so that only allowed branch flows are merged. It blocks invalid PRs targeting `development` or `main` before they can be merged.
-
-### Branch promotion flow
-
-The expected promotion path is:
-
-`feat/*` or `feature/*` -> `development` -> `main` with `release` tag
-
-This ensures that changes are reviewed, validated, and promoted through the correct environments before release.
-
-### Flux image automation
-
-The Flux GitOps setup also includes image automation for application container images. The current active development flow uses:
-
-- `clusters/minikube/environments/dev/image-reflector.yaml` for the `ImageRepository` and `ImagePolicy` that scan `ghcr.io/robertkustra/dev/sandbox-ai-consumer`.
-- `clusters/minikube/flux-system/image-automation.yaml` for the `ImageUpdateAutomation` that writes the selected tag to `sandbox-env-values/overlays/dev`.
-
-Once a new image is published to GHCR, Flux can detect it and commit the selected tag to the development values overlay, provided that `ghcr-pull-secret` is available in the `flux-system` namespace and the Git credentials permit writes to `sandbox-env-values`.
-
 ## What this setup does
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It provides:
