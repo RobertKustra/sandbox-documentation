@@ -159,7 +159,7 @@ flowchart LR
 
 Clone or open the workspace containing all `sandbox-*` `wsl-config` repositories.
 
-For this demo, you'll need WSL set up with Ubuntu.
+For this demo, you'll need WSL set up with Ubuntu (if your main Operating System is Windows) Still you can run the followig script on Linux: Ubuntu.
 
 Run the prerequisite script to install required packages:
 
