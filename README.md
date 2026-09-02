@@ -159,7 +159,7 @@ flowchart LR
 
 Clone or open the workspace containing all `sandbox-*` `wsl-config` repositories.
 
-For this demo, you'll need WSL set up with Ubuntu (if your main Operating System is Windows) Still you can run the followig script on Linux: Ubuntu.
+For this demo, you'll need `WSL` set up with `Ubuntu` (if your main Operating System is Windows) Still you can run the followig script on `Linux: Ubuntu`.
 
 Run the prerequisite script to install required packages:
 
@@ -177,7 +177,7 @@ The script installs the following packages for the demo environment:
 - `tilix`
 - `docker-ce`, `docker-ce-cli`, `containerd.io`
 - Homebrew for Linux
-- `git`, `wget`, `zsh`, `tmux`, `neovim`, `python`, `libpq`, `htop`, `ripgrep`, `fd`, `fzf`, `bat`, `jq`, `awscli`, `k9s`, `docker`, `minikube`, `kubectl`, `flux`
+- `git`, `wget`, `zsh`, `tmux`, `neovim`, `python`, `libpq`, `htop`, `ripgrep`, `fd`, `fzf`, `bat`, `jq`, `awscli`, `k9s`, `docker`, `minikube`, `kubectl`, `flux`,`flux9s`
 - `kubectx` and `kubens`
 
 ### 2. Start Minikube
