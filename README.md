@@ -31,7 +31,7 @@ sandbox-cluster-config/
 `-- utils/operators/postgres/      # PostgreSQL operator resources
 ```
 
-The entrypoint includes external sources, Flux system resources, selected shared components, and selected environment stages. Definitions for `dev`, `test`, and `prod` exist, but the current Minikube entrypoint enables only `dev`. Monitoring and LLM are shared cluster components rather than application environments.
+The entrypoint includes external sources, Flux system resources, selected shared components, and the `dev`, `test`, and `prod` environment stages. Monitoring and LLM are shared cluster components rather than application environments.
 
 ### Bonus 
 1. Simple app for LLM as consumer
@@ -43,7 +43,7 @@ The entrypoint includes external sources, Flux system resources, selected shared
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It provides:
 
-- application environment definitions for `dev`, `test`, and `prod`; currently only `dev` is enabled
+- application environment definitions for `dev`, `test`, and `prod`; all three stages are enabled in the current Minikube entrypoint
 - shared cluster components for monitoring and LLM workloads
 - Helm chart deployments managed by Flux
 - shared and environment-specific Helm values stored separately from cluster configuration
@@ -64,7 +64,7 @@ flowchart TB
     Controllers["Flux controllers: source, kustomize, helm, image reflector, image automation"]
     GitSources["GitRepository sources: cluster-config, helm-charts, env-values"]
     HelmSources["HelmRepository sources: Prometheus, Grafana, Crunchy PGO, NVIDIA, Traefik, cert-manager"]
-    FluxStages["Flux Kustomizations: core components, env-values-dev, minikube-dev"]
+    FluxStages["Flux Kustomizations: core components, env-values and minikube stages"]
     ImageResources["ImageRepository + ImagePolicy + ImageUpdateAutomation"]
     FluxSecrets["Secrets: GHCR pull + Git SSH write access"]
   end
@@ -94,7 +94,7 @@ flowchart TB
     HFSecret["Secret: hf-token + model cache PVC"]
   end
 
-  subgraph DevNS[namespace: dev - active]
+  subgraph DevNS[namespace: dev - representative]
     EnvConfig["ConfigMaps from sandbox-env-values: base + dev values"]
     AppReleases["HelmReleases: sandbox-nginx, sandbox-redis, sandbox-ai-consumer"]
     AppWorkloads["Chart workloads: Deployments + Services"]
@@ -130,7 +130,7 @@ flowchart TB
 
 ### Environment composition
 
-The diagram includes only the `dev` environment referenced by the active Minikube entrypoint.
+The diagram shows `dev` as a representative environment. The active Minikube entrypoint references `dev`, `test`, and `prod`.
 
 ```mermaid
 flowchart LR
@@ -141,7 +141,7 @@ flowchart LR
   Shared["Shared cluster services: Traefik, monitoring, logs, Crunchy Postgres operator"]
   LLM["Shared LLM service: sandbox-vllm in namespace llm"]
 
-  subgraph Dev[dev - ACTIVE]
+  subgraph Dev[dev - REPRESENTATIVE]
     DevApps[NGINX + Redis + AI consumer]
     DevDB[PostgresCluster]
   end
@@ -157,7 +157,7 @@ flowchart LR
 
 ### 1. Prepare the workspace
 
-Clone or open the workspace containing all `sandbox-*` `wsl-config` repositories.
+Clone or open the workspace containing all `sandbox-*` and `wsl-config` repositories.
 
 For this demo, you'll need `WSL` set up with `Ubuntu` (if your main Operating System is Windows) Still you can run the followig script on `Linux: Ubuntu`.
 
@@ -165,6 +165,7 @@ Run the prerequisite script to install required packages:
 
 
 ```bash
+cd wsl-config
 chmod +x wsl-setup.sh
 ./wsl-setup.sh
 ```
@@ -183,13 +184,14 @@ The script installs the following packages for the demo environment:
 ### 2. Start Minikube
 
 ```bash
+# Minimum for Qwen/Qwen2.5-0.5B-Instruct
 minikube start \
   -p minikube \
   --driver=docker \
   --container-runtime=docker \
   --gpus=all \
-  --cpus=4 #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources \
-  --memory=4608mb #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
+  --cpus=4 \
+  --memory=4608mb
 
 kubectl get node minikube \
   -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
@@ -461,13 +463,14 @@ After committing these changes Flux will skip the GPU-dependent components and a
 Ensure your Minikube instance has sufficient resources:
 
 ```bash
+# Minimum for Qwen/Qwen2.5-0.5B-Instruct
 minikube start \
   -p minikube \
   --driver=docker \
   --container-runtime=docker \
-  --gpus=all
-  --cpus=4 #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
-  --memory=4608mb #minimum for Qwen/Qwen2.5-0.5B-Instruct, bigger models need more resources
+  --gpus=all \
+  --cpus=4 \
+  --memory=4608mb
 
 kubectl get node minikube \
   -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
