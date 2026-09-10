@@ -36,7 +36,7 @@ The entrypoint includes external sources, Flux system resources, selected shared
 ### Bonus 
 1. Simple app for LLM as consumer
     - [sandbox-ai-consumer](https://github.com/RobertKustra/sandbox-ai-consumer)
-2. Scaffold environments 
+2. Scaffold environments [need to improve]
     - [sandbox-scaffolder](https://github.com/RobertKustra/sandbox-scaffolder) - separate scaffold tool used to generate and sync environment manifests for `sandbox-cluster-config` and `sandbox-env-values`.
 
 ## What this setup does
