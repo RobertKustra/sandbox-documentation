@@ -43,7 +43,7 @@ The entrypoint includes external sources, Flux system resources, selected shared
 
 This workspace defines a GitOps flow for a Minikube cluster using Flux. It provides:
 
-- application environment definitions for `dev`, `test`, and `prod`; all three stages are enabled in the current Minikube entrypoint
+- application environment definitions for `dev`, `test`, and `prod` all three stages are enabled in the current Minikube entrypoint
 - shared cluster components for monitoring and LLM workloads
 - Helm chart deployments managed by Flux
 - shared and environment-specific Helm values stored separately from cluster configuration
