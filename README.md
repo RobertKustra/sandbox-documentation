@@ -183,15 +183,20 @@ The script installs the following packages for the demo environment:
 
 ### 2. Start Minikube
 
+Running the complete cluster with the `dev`, `test`, and `prod` environments requires a total of at least 12 CPUs and 16 GB of RAM.
+
+A smaller test profile has been verified with 5 CPUs and 6 GB of RAM. This configuration runs one application environment, such as `dev`, and uses the `tiny` LLM overlay. Treat these values as the tested minimum for this specific profile; other models or additional components may require more resources.
+
+#### Single-node profile
+
 ```bash
-# Minimum for Qwen/Qwen2.5-0.5B-Instruct
 minikube start \
   -p minikube \
   --driver=docker \
   --container-runtime=docker \
   --gpus=all \
-  --cpus=4 \
-  --memory=4608mb
+  --cpus=12 \
+  --memory=26Gb
 
 kubectl get node minikube \
   -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
@@ -201,6 +206,64 @@ docker inspect minikube \
 
 kubectl config current-context
 ```
+
+#### Two-node profile for afinities testing
+
+The resource flags apply to every node. Use 6 CPUs and 8 GB of RAM per node to provide 12 CPUs and 16 GB across the profile:
+
+```bash
+minikube start \
+  -p minikube \
+  --nodes=2 \
+  --driver=docker \
+  --container-runtime=docker \
+  --gpus=all \
+  --cpus=6 \
+  --memory=8192mb
+
+kubectl label node minikube-m02 \
+  sandbox.local/gpu=nvidia \
+  --overwrite
+
+kubectl patch daemonset nvidia-device-plugin-daemonset \
+  -n kube-system \
+  --type=merge \
+  -p '{
+    "spec": {
+      "template": {
+        "spec": {
+          "nodeSelector": {
+            "sandbox.local/gpu": "nvidia"
+          }
+        }
+      }
+    }
+  }'
+
+kubectl get nodes -L sandbox.local/gpu
+```
+
+The patch limits the NVIDIA device plugin to `minikube-m02`. Only this node advertises `nvidia.com/gpu`, and the vLLM node affinity selects it through `sandbox.local/gpu=nvidia`.
+
+Enable CSI Hostpath before bootstrapping Flux so persistent workloads use node-aware local volumes:
+
+```bash
+minikube addons enable volumesnapshots -p minikube
+minikube addons enable csi-hostpath-driver -p minikube
+
+kubectl annotate storageclass standard \
+  storageclass.kubernetes.io/is-default-class- \
+  --overwrite
+
+kubectl annotate storageclass csi-hostpath-sc \
+  storageclass.kubernetes.io/is-default-class=true \
+  --overwrite
+
+kubectl get storageclass
+kubectl get csinode
+```
+
+The same configuration works for single-node and multi-node Minikube profiles. CSI Hostpath creates local volumes with node topology, preventing a pod from being scheduled on a node that cannot access its volume. It does not provide shared or replicated storage, and deleting the Minikube profile deletes the test data.
 
 
 
@@ -460,24 +523,16 @@ After committing these changes Flux will skip the GPU-dependent components and a
 
 #### Cluster Resource Reservation
 
-Ensure your Minikube instance has sufficient resources:
+Running the complete platform with `dev`, `test`, and `prod` requires at least 12 CPUs and 16 GB of RAM in total. Use either the single-node or two-node bootstrap from section `2. Start Minikube`.
+
+For resource-constrained testing, a profile with 5 CPUs and 6 GB of RAM has been verified using one environment, such as `dev`, and the `tiny` LLM overlay. This is the tested minimum for that specific configuration; other models or additional components may require more resources.
 
 ```bash
-# Minimum for Qwen/Qwen2.5-0.5B-Instruct
-minikube start \
-  -p minikube \
-  --driver=docker \
-  --container-runtime=docker \
-  --gpus=all \
-  --cpus=4 \
-  --memory=4608mb
-
-kubectl get node minikube \
-  -o jsonpath='Allocatable: cpu={.status.allocatable.cpu} mem={.status.allocatable.memory} gpu={.status.allocatable.nvidia\.com/gpu}{"\n"}'
-
-docker inspect minikube \
-  --format 'NanoCPUs={{.HostConfig.NanoCpus}} MemoryBytes={{.HostConfig.Memory}}'
+kubectl get nodes \
+  -o custom-columns='NAME:.metadata.name,CPU:.status.capacity.cpu,MEMORY:.status.capacity.memory,GPU:.status.allocatable.nvidia\.com/gpu'
 ```
+
+Persistent workloads require the CSI Hostpath addons and `csi-hostpath-sc` as the default StorageClass. Run the CSI setup from section `2. Start Minikube` before bootstrapping Flux. This applies to both single-node and multi-node profiles.
 
 For WSL2 with NVIDIA GPU passthrough, configure in your `.wslconfig`:
 
