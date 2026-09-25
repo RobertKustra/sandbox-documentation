@@ -723,7 +723,7 @@ Flux periodically reconciles resources according to their `spec.interval`. A dep
 | `HelmRepository` | 10 minutes | Crunchy Data PGO |
 | `HelmRepository` | 1 hour | cert-manager and External Secrets |
 | Cluster and environment `Kustomization` | 10 minutes | `flux-system`, shared cluster components, and `minikube-<env>` stages |
-| Environment values `Kustomization` | 5 minutes | `sandbox-env-values-dev`, `sandbox-env-values-test`, and `sandbox-env-values-prod` |
+| Namespace and application values `Kustomization` | 5 minutes | `sandbox-namespace-<env>` and `sandbox-<service>-values-<env>` stages |
 | Application and shared-service `HelmRelease` | 5 minutes | Sandbox applications, vLLM, Traefik, and monitoring releases |
 | Operator `HelmRelease` | 10 minutes | cert-manager and Crunchy Data PGO |
 | `ImageRepository` | 1 minute | Scans the configured container registry |
