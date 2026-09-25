@@ -615,7 +615,8 @@ To change application behavior:
   - `sandbox-helm-charts/charts/sandbox-redis`
   - `sandbox-helm-charts/charts/sandbox-vllm`
   - `sandbox-helm-charts/charts/sandbox-ai-consumer`
-- edit shared values in `sandbox-env-values/base` and environment overrides in `sandbox-env-values/overlays/dev`, `sandbox-env-values/overlays/test`, or `sandbox-env-values/overlays/prod`
+- edit shared values in `sandbox-env-values/<service>/base` and environment overrides in `sandbox-env-values/<service>/overlays/<env>`
+- edit environment Namespace metadata in `sandbox-env-values/namespaces/overlays/<env>`
 - update shared app manifests in `sandbox-cluster-config/apps/<service>/base`
 - update environment overlays in `sandbox-cluster-config/apps/<service>/overlays/<env>`
 - update LLM manifests in `sandbox-cluster-config/cluster-components/llm`
